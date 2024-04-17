@@ -1,5 +1,10 @@
 package com.example.uitutorial
 
+import android.Manifest
+import android.annotation.SuppressLint
+import android.content.Context
+import android.content.pm.PackageManager
+import android.location.LocationManager
 import android.os.Bundle
 import android.preference.PreferenceManager
 import androidx.activity.ComponentActivity
@@ -49,12 +54,15 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.app.ActivityCompat
 import com.example.uitutorial.ui.theme.UITutorialTheme
 import org.osmdroid.config.Configuration.*
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
-import org.osmdroid.views.overlay.Overlay
+import org.osmdroid.views.overlay.compass.CompassOverlay
+import org.osmdroid.views.overlay.gestures.RotationGestureOverlay
+import org.osmdroid.views.overlay.gridlines.LatLonGridlineOverlay2
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
 
@@ -64,16 +72,18 @@ class MainActivity : ComponentActivity() {
     private val REQUEST_PERMISSIONS_REQUEST_CODE = 1
     private lateinit var map : MapView
 
+    private lateinit var locationManager: LocationManager
+
+    //final lateinit var pLocationManager : LocationManager
+
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
 
-        map = MapView(this.applicationContext)
-        val mapController = map.controller
-        mapController.setZoom(9.5)
-        val startPoint = GeoPoint(48.8583, 2.2944);
-        mapController.setCenter(startPoint);
+        getInstance().load(this, PreferenceManager.getDefaultSharedPreferences(this))
 
-        var myLocationOverlay = MyLocationNewOverlay(GpsMyLocationProvider(this.applicationContext), map)
-        map.overlays.add(myLocationOverlay)
+        map = MapView(this.applicationContext)
+        locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
 
         //handle permissions first, before map is created. not depicted here
 
@@ -90,20 +100,81 @@ class MainActivity : ComponentActivity() {
         //inflate and create the map
         //setContentView(R.layout.main)
         super.onCreate(savedInstanceState)
+        // Set content with Jetpack Compose
         setContent {
-            BottomAppBarExample(map)
+            CheckLocationPermission {
+                BottomAppBarExample(map = map)
+            }
         }
 
 
-
-        //map = findViewById<MapView>(R.id.map)
-        //map.setTileSource(TileSourceFactory.MAPNIK)
     }
+
+
+
+
+    @Composable
+    fun CheckLocationPermission(onPermissionGranted: @Composable () -> Unit) {
+        val permissionState = remember { ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) }
+
+        // If permission is granted, execute the provided function
+        if (permissionState == PackageManager.PERMISSION_GRANTED) {
+            onPermissionGranted()
+        } else {
+            // Request permission from the user
+            ActivityCompat.requestPermissions(
+                this@MainActivity,
+                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+                REQUEST_PERMISSIONS_REQUEST_CODE
+            )
+        }
+    }
+    // Handle the result of the permission request
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == REQUEST_PERMISSIONS_REQUEST_CODE) {
+            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // Permission granted, continue with your UI setup
+                setContent {
+                    BottomAppBarExample(map = MapView(this))
+                }
+            } else {
+                // Permission denied, handle accordingly (e.g., show an explanation or disable location features)
+                // For simplicity, we'll just finish the activity
+                finish()
+            }
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        //this will refresh the osmdroid configuration on resuming.
+        //if you make changes to the configuration, use
+        //SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        //Configuration.getInstance().load(this, PreferenceManager.getDefaultSharedPreferences(this));
+        map.onResume() //needed for compass, my location overlays, v6.0.0 and up
+    }
+
+    override fun onPause() {
+        super.onPause()
+        //this will refresh the osmdroid configuration on resuming.
+        //if you make changes to the configuration, use
+        //SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        //Configuration.getInstance().save(this, prefs);
+        map.onPause()  //needed for compass, my location overlays, v6.0.0 and up
+    }
+
+
 }
+
+
+
+
 
 @Composable
 fun CustomView(map: MapView) {
     var selectedItem by remember { mutableStateOf(0) }
+
 
     // Adds view to Compose
      AndroidView(
@@ -111,18 +182,49 @@ fun CustomView(map: MapView) {
         factory = {
             // Creates view
             MapView(map.context).apply {
+
+                val locationOverlay = MyLocationNewOverlay(GpsMyLocationProvider(this.context), this)
+                locationOverlay.enableMyLocation()
+                map.overlays.add(locationOverlay)
+
+
+
+                val overlay = LatLonGridlineOverlay2();
+                this.overlays.add(overlay);
+                val rotationGestureOverlay = RotationGestureOverlay(this)
+                rotationGestureOverlay.isEnabled
+                this.setMultiTouchControls(true)
+                this.overlays.add(rotationGestureOverlay)
+
+                val compassOverlay = CompassOverlay(this.context, this)
+                compassOverlay.enableCompass()
+                this.overlays.add(compassOverlay)
+
+                this.controller.zoomTo(5)
+
+                //val mLocationOverlay = MyLocationNewOverlay(GpsMyLocationProvider())
                 // Sets up listeners for View -> Compose communication
                 setOnClickListener {
                     selectedItem = 1
                 }
                 setTileSource(TileSourceFactory.MAPNIK)
+
+
+
+
                 //maxZoomLevel = 2.0
             }
+
+
 
 
         },
         update = { view ->
 
+
+
+            view.id = selectedItem
+            //map.zoomController.activate()
 
             // View's been inflated or state read in this block has been updated
             // Add logic here if necessary
@@ -255,17 +357,6 @@ fun MessageCard(msg: Message) {
 
 
 
-@Preview
-@Composable
-fun PreviewMessageCard() {
-    UITutorialTheme {
-        Surface {
-            MessageCard(
-                msg = Message("Lexi", "Take a look at Jetpack Compose, it's great!")
-            )
-        }
-    }
-}
 
 
 
