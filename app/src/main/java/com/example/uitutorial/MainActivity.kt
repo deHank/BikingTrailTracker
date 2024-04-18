@@ -5,6 +5,7 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
+import android.graphics.Color
 import android.location.Location
 import android.location.LocationManager
 import android.os.Bundle
@@ -27,6 +28,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Home
@@ -39,6 +41,7 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -58,7 +61,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
+import androidx.core.view.TintableBackgroundView
 import androidx.core.view.get
+import androidx.lifecycle.findViewTreeViewModelStoreOwner
 import com.example.uitutorial.ui.theme.UITutorialTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -67,6 +73,7 @@ import org.osmdroid.config.Configuration.*
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
+import org.osmdroid.views.overlay.Marker
 import org.osmdroid.views.overlay.compass.CompassOverlay
 import org.osmdroid.views.overlay.gestures.RotationGestureOverlay
 import org.osmdroid.views.overlay.gridlines.LatLonGridlineOverlay2
@@ -119,7 +126,7 @@ class MainActivity : ComponentActivity() {
         }
 
 
-
+        map.controller.setZoom(1.0)
 
 
 
@@ -205,9 +212,10 @@ fun CustomView(map: MapView) {
 
 
                 val overlay = LatLonGridlineOverlay2();
-                this.overlays.add(overlay);
+                //this.overlays.add(overlay);
                 val rotationGestureOverlay = RotationGestureOverlay(this)
                 rotationGestureOverlay.isEnabled
+
                 this.setMultiTouchControls(true)
                 this.overlays.add(rotationGestureOverlay)
 
@@ -226,6 +234,7 @@ fun CustomView(map: MapView) {
                 setTileSource(TileSourceFactory.MAPNIK)
 
                 var locationHandler = GPSHandler(this.context)
+                locationHandler.startLocationUpdates()
 
                 CoroutineScope(Dispatchers.Main).launch {
                     val location = locationHandler.getCurrentLocation()!!
@@ -238,11 +247,20 @@ fun CustomView(map: MapView) {
                         // Create a GeoPoint with the location's latitude and longitude
                         val center = GeoPoint(it.latitude, it.longitude)
 
+                        val firstMarker = Marker(this@apply)
+                        firstMarker.position = center
+
+                        firstMarker.setAnchor(Marker.ANCHOR_BOTTOM, Marker.ANCHOR_CENTER)
+                        //firstMarker.icon = ContextCompat.getDrawable(context, R.drawable.currentlocation)
+                        firstMarker.image = ContextCompat.getDrawable(context, R.drawable.currentlocation)
+                        this@apply.overlays.add(firstMarker)
                         // Set the center of the map view to the new location
                         this@apply.controller.setCenter(center)
                         this@apply.controller.animateTo(center)
                     }
                 }
+
+
 
 
 
@@ -325,7 +343,12 @@ fun BottomAppBarExample(map: MapView) {
                         containerColor = BottomAppBarDefaults.bottomAppBarFabColor,
                         elevation = FloatingActionButtonDefaults.bottomAppBarFabElevation()
                     ) {
-                        Icon(Icons.Filled.Add, "Localized description")
+                        var recIcon = Icons.Filled.AddCircle
+
+
+                        Icon(recIcon, "Localized description",Modifier.size(48.dp), tint = androidx.compose.ui.graphics.Color.Red)
+
+
                     }
                 }
             )

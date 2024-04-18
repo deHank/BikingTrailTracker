@@ -5,8 +5,10 @@ import android.content.pm.PackageManager
 import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
+import android.location.LocationProvider
 import android.os.Bundle
 import android.os.Handler
+import android.os.HandlerThread
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.ContextCompat.getSystemService
@@ -20,12 +22,19 @@ import kotlin.coroutines.suspendCoroutine
 
 class GPSHandler(private val context: Context) {
 
-    private val locationManager: LocationManager =
+
+
+    private var locationManager: LocationManager =
         context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
 
     private var lastKnownLocation: Location? = null
-    private var handler: Handler = Handler()
-    private var locationListener: LocationListenerCompat? = null
+    private lateinit var handlerThread: HandlerThread
+    private lateinit var handler: Handler
+
+
+
+
+    private lateinit var locationListener: LocationListener
 
     companion object {
         private const val MIN_DISTANCE_CHANGE_FOR_UPDATES: Float = 10f // meters
@@ -33,23 +42,18 @@ class GPSHandler(private val context: Context) {
 
     init {
         createLocationListener()
+        setupHandlerThread()
+
+
     }
 
     private fun createLocationListener() {
-        locationListener = object : LocationListenerCompat {
+        locationListener = object : LocationListener {
             override fun onLocationChanged(location: Location) {
                 // Update the last known location whenever a new location is received
                 lastKnownLocation = location
             }
-
-            override fun onStatusChanged(provider: String, status: Int, extras: Bundle?) {}
-            override fun onProviderEnabled(provider: String) {}
-            override fun onProviderDisabled(provider: String) {}
         }
-
-        val locationRequestCompat =LocationRequestCompat.Builder(10).build()
-
-
 
         if (ActivityCompat.checkSelfPermission(
                 this.context,
@@ -70,25 +74,25 @@ class GPSHandler(private val context: Context) {
         }
 
 
-        LocationManagerCompat.requestLocationUpdates(
-            locationManager,
-            LocationManager.GPS_PROVIDER,
-            locationRequestCompat,
-            locationListener!!,
-            handler.looper
-        )
+
+    }
+
+    private fun setupHandlerThread() {
+        handlerThread = HandlerThread("LocationUpdatesThread")
+        handlerThread.start()
+        handler = Handler(handlerThread.looper)
     }
 
     suspend fun getCurrentLocation(): Location? {
         return withContext(Dispatchers.IO) {
             if (ContextCompat.checkSelfPermission(
                     context,
-                    android.Manifest.permission.ACCESS_FINE_LOCATION
-                ) != android.content.pm.PackageManager.PERMISSION_GRANTED &&
+                    Manifest.permission.ACCESS_FINE_LOCATION
+                ) != PackageManager.PERMISSION_GRANTED &&
                 ContextCompat.checkSelfPermission(
                     context,
-                    android.Manifest.permission.ACCESS_COARSE_LOCATION
-                ) != android.content.pm.PackageManager.PERMISSION_GRANTED
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+                ) != PackageManager.PERMISSION_GRANTED
             ) {
                 // Permission not granted, handle it as needed
                 return@withContext null
@@ -107,4 +111,36 @@ class GPSHandler(private val context: Context) {
             location
         }
     }
+
+    fun startLocationUpdates() {
+        if (ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED &&
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
+            handler.post {
+                locationManager.requestLocationUpdates(
+                    LocationManager.GPS_PROVIDER,
+                    1000,
+                    MIN_DISTANCE_CHANGE_FOR_UPDATES,
+                    locationListener,
+                    handler.looper
+                )
+            }
+        }
+    }
+
+    fun stopLocationUpdates() {
+        locationManager.removeUpdates(locationListener)
+    }
+
+    fun onDestroy() {
+        handlerThread.quit()
+    }
+
+
 }
