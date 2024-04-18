@@ -1,12 +1,15 @@
 package com.example.uitutorial
 
+import GPSHandler
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
+import android.location.Location
 import android.location.LocationManager
 import android.os.Bundle
 import android.preference.PreferenceManager
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
@@ -55,7 +58,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.app.ActivityCompat
+import androidx.core.view.get
 import com.example.uitutorial.ui.theme.UITutorialTheme
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.osmdroid.config.Configuration.*
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
@@ -74,6 +81,10 @@ class MainActivity : ComponentActivity() {
 
     private lateinit var locationManager: LocationManager
 
+    private lateinit var locationHandler: GPSHandler
+
+    private lateinit var location: Location
+
     //final lateinit var pLocationManager : LocationManager
 
 
@@ -83,7 +94,7 @@ class MainActivity : ComponentActivity() {
         getInstance().load(this, PreferenceManager.getDefaultSharedPreferences(this))
 
         map = MapView(this.applicationContext)
-        locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        //locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
 
         //handle permissions first, before map is created. not depicted here
 
@@ -106,6 +117,10 @@ class MainActivity : ComponentActivity() {
                 BottomAppBarExample(map = map)
             }
         }
+
+
+
+
 
 
     }
@@ -200,7 +215,8 @@ fun CustomView(map: MapView) {
                 compassOverlay.enableCompass()
                 this.overlays.add(compassOverlay)
 
-                this.controller.zoomTo(5)
+                this.controller.zoomTo(18)
+
 
                 //val mLocationOverlay = MyLocationNewOverlay(GpsMyLocationProvider())
                 // Sets up listeners for View -> Compose communication
@@ -208,6 +224,25 @@ fun CustomView(map: MapView) {
                     selectedItem = 1
                 }
                 setTileSource(TileSourceFactory.MAPNIK)
+
+                var locationHandler = GPSHandler(this.context)
+
+                CoroutineScope(Dispatchers.Main).launch {
+                    val location = locationHandler.getCurrentLocation()!!
+                    // Do something with the location
+                    location?.let {
+                        Log.d("Location", "Latitude: ${it.latitude}, Longitude: ${it.longitude}")
+
+
+
+                        // Create a GeoPoint with the location's latitude and longitude
+                        val center = GeoPoint(it.latitude, it.longitude)
+
+                        // Set the center of the map view to the new location
+                        this@apply.controller.setCenter(center)
+                        this@apply.controller.animateTo(center)
+                    }
+                }
 
 
 
@@ -221,9 +256,9 @@ fun CustomView(map: MapView) {
         },
         update = { view ->
 
+            view.rootView.id = selectedItem
 
-
-            view.id = selectedItem
+            //view.get(selectedItem)
             //map.zoomController.activate()
 
             // View's been inflated or state read in this block has been updated
@@ -311,68 +346,7 @@ fun BottomAppBarExample(map: MapView) {
 }
 
 
-@Preview
-@Composable
-fun CardMinimalExample() {
-    Card(
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-    ) {
-        Text(
-            text = "Test Woo",
-            modifier = Modifier
-                .padding(16.dp),
-            textAlign = TextAlign.Center,
-
-            )
-    }
-}
-
-
-data class Message(val author: String, val body: String)
-
-@Composable
-fun MessageCard(msg: Message) {
-    Row(modifier = Modifier.padding(all = 8.dp)) {
-        Image(
-            painter = painterResource(R.drawable.profile_picture),
-            contentDescription = null,
-            modifier = Modifier
-                .size(40.dp)
-                .clip(CircleShape)
-                .border(1.5.dp, MaterialTheme.colorScheme.primary, CircleShape)
-        )
-
-        Spacer(modifier = Modifier.width(8.dp))
-
-        Column {
-            Text(
-                text = msg.author,
-                color = MaterialTheme.colorScheme.secondary
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(text = msg.body)
-        }
-    }
-}
 
 
 
 
-
-
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    UITutorialTheme {
-        Greeting("Android")
-    }
-}
