@@ -82,6 +82,7 @@ import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
+import org.osmdroid.views.overlay.Overlay
 import org.osmdroid.views.overlay.compass.CompassOverlay
 import org.osmdroid.views.overlay.gestures.RotationGestureOverlay
 import org.osmdroid.views.overlay.gridlines.LatLonGridlineOverlay2
@@ -305,22 +306,37 @@ fun CustomView(map: MapView) {
         )
 
         // Compose button overlaid on top of the custom view
-            LargeFloatingActionButton(
-                onClick = { map.controller.zoomTo(8)
-                          map.invalidate()
+        LargeFloatingActionButton(
+            onClick = { map.controller.zoomTo(18)
+                var locationOverlay: MyLocationNewOverlay
+                locationOverlay = MyLocationNewOverlay(map)
+                for(overlay in map.overlays){
+                    Log.d(
+                        "Location",
+                        "Latitude: ${overlay.toString()}, Longitude: "
+                    )
+                    if(overlay.toString().contains("MyLocation")){
+                        locationOverlay = overlay as MyLocationNewOverlay
+                    }
+                }
 
-                          },
-                containerColor = BottomAppBarDefaults.bottomAppBarFabColor,
-                elevation = FloatingActionButtonDefaults.bottomAppBarFabElevation(),
-                modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp).size(48.dp)
-            ) {
-                var recIcon = Icons.Filled.AddCircle
+
+                locationOverlay.enableMyLocation()
+                locationOverlay.enableFollowLocation()
+                locationOverlay.isDrawAccuracyEnabled = true
+                map.invalidate()
+            },
+            containerColor = BottomAppBarDefaults.bottomAppBarFabColor,
+            elevation = FloatingActionButtonDefaults.bottomAppBarFabElevation(),
+            modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp).size(48.dp)
+        ) {
+            var recIcon = Icons.Filled.AddCircle
 
 
-                Icon(recIcon, "Localized description",Modifier.size(32.dp), tint = androidx.compose.ui.graphics.Color.Gray)
+            Icon(recIcon, "Localized description",Modifier.size(32.dp), tint = androidx.compose.ui.graphics.Color.Gray)
 
 
-            }
+        }
 
     }
 
@@ -377,7 +393,7 @@ fun BottomAppBarExample(map: MapView) {
                 },
                 floatingActionButton = {
                     FloatingActionButton(
-                        onClick = { map.controller.zoomTo(10) },
+                        onClick = { map.controller.zoomTo(18) },
                         containerColor = BottomAppBarDefaults.bottomAppBarFabColor,
                         elevation = FloatingActionButtonDefaults.bottomAppBarFabElevation()
                     ) {
@@ -398,7 +414,7 @@ fun BottomAppBarExample(map: MapView) {
                 .clip(shape = RoundedCornerShape(20.dp)),
             verticalArrangement = Arrangement.spacedBy(16.dp),
 
-        ) {
+            ) {
 
 
             CustomView(map)
