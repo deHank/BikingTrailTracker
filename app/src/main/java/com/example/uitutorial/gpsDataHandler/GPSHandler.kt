@@ -17,6 +17,7 @@ import androidx.core.location.LocationManagerCompat
 import androidx.core.location.LocationRequestCompat
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
@@ -28,8 +29,7 @@ class GPSHandler(private val context: Context) {
         context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
 
     private var lastKnownLocation: Location? = null
-    private lateinit var handlerThread: HandlerThread
-    private lateinit var handler: Handler
+
 
 
 
@@ -42,7 +42,7 @@ class GPSHandler(private val context: Context) {
 
     init {
         createLocationListener()
-        setupHandlerThread()
+
 
 
     }
@@ -77,11 +77,7 @@ class GPSHandler(private val context: Context) {
 
     }
 
-    private fun setupHandlerThread() {
-        handlerThread = HandlerThread("LocationUpdatesThread")
-        handlerThread.start()
-        handler = Handler(handlerThread.looper)
-    }
+
 
     suspend fun getCurrentLocation(): Location? {
         return withContext(Dispatchers.IO) {
@@ -112,35 +108,7 @@ class GPSHandler(private val context: Context) {
         }
     }
 
-    fun startLocationUpdates() {
-        if (ContextCompat.checkSelfPermission(
-                context,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) == PackageManager.PERMISSION_GRANTED &&
-            ContextCompat.checkSelfPermission(
-                context,
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            ) == PackageManager.PERMISSION_GRANTED
-        ) {
-            handler.post {
-                locationManager.requestLocationUpdates(
-                    LocationManager.GPS_PROVIDER,
-                    1000,
-                    MIN_DISTANCE_CHANGE_FOR_UPDATES,
-                    locationListener,
-                    handler.looper
-                )
-            }
-        }
-    }
 
-    fun stopLocationUpdates() {
-        locationManager.removeUpdates(locationListener)
-    }
-
-    fun onDestroy() {
-        handlerThread.quit()
-    }
 
 
 }

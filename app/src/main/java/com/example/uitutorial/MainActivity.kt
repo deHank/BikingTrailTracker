@@ -5,7 +5,11 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.Color
+import android.graphics.Rect
+import android.graphics.drawable.Icon
 import android.location.Location
 import android.location.LocationManager
 import android.os.Bundle
@@ -16,6 +20,7 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -34,6 +39,7 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.BottomAppBarDefaults
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -41,6 +47,7 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LargeFloatingActionButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -53,6 +60,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
@@ -100,7 +108,8 @@ class MainActivity : ComponentActivity() {
 
         getInstance().load(this, PreferenceManager.getDefaultSharedPreferences(this))
 
-        map = MapView(this.applicationContext)
+        map = MapView(this)
+
         //locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
 
         //handle permissions first, before map is created. not depicted here
@@ -121,18 +130,21 @@ class MainActivity : ComponentActivity() {
         // Set content with Jetpack Compose
         setContent {
             CheckLocationPermission {
-                BottomAppBarExample(map = map)
+                BottomAppBarExample(map = this.map)
             }
         }
 
 
-        map.controller.setZoom(1.0)
-
+        this.map.controller.setZoom(1.0)
+        goToCurrentLocation()
 
 
     }
 
+    fun goToCurrentLocation(){
 
+
+    }
 
 
     @Composable
@@ -196,102 +208,128 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun CustomView(map: MapView) {
     var selectedItem by remember { mutableStateOf(0) }
+    Box(modifier = Modifier.fillMaxSize()) {
+
+        // Adds view to Compose
+        AndroidView(
+
+            modifier = Modifier.fillMaxSize(), // Occupy the max size in the Compose UI tree
+            factory = {
+                // Creates view
+                map.apply {
 
 
-    // Adds view to Compose
-     AndroidView(
-        modifier = Modifier.fillMaxSize(), // Occupy the max size in the Compose UI tree
-        factory = {
-            // Creates view
-            MapView(map.context).apply {
+                    val overlay = LatLonGridlineOverlay2();
+                    //this.overlays.add(overlay);
+                    val rotationGestureOverlay = RotationGestureOverlay(this)
+                    rotationGestureOverlay.isEnabled
 
-                val locationOverlay = MyLocationNewOverlay(GpsMyLocationProvider(this.context), this)
-                locationOverlay.enableMyLocation()
-                map.overlays.add(locationOverlay)
+                    this.setMultiTouchControls(true)
+                    this.overlays.add(rotationGestureOverlay)
 
+                    val compassOverlay = CompassOverlay(this.context, this)
+                    compassOverlay.enableCompass()
+                    compassOverlay.isPointerMode = true
+                    this.overlays.add(compassOverlay)
 
-
-                val overlay = LatLonGridlineOverlay2();
-                //this.overlays.add(overlay);
-                val rotationGestureOverlay = RotationGestureOverlay(this)
-                rotationGestureOverlay.isEnabled
-
-                this.setMultiTouchControls(true)
-                this.overlays.add(rotationGestureOverlay)
-
-                val compassOverlay = CompassOverlay(this.context, this)
-                compassOverlay.enableCompass()
-                this.overlays.add(compassOverlay)
-
-                this.controller.zoomTo(18)
-
-
-                //val mLocationOverlay = MyLocationNewOverlay(GpsMyLocationProvider())
-                // Sets up listeners for View -> Compose communication
-                setOnClickListener {
-                    selectedItem = 1
-                }
-                setTileSource(TileSourceFactory.MAPNIK)
-
-                var locationHandler = GPSHandler(this.context)
-                locationHandler.startLocationUpdates()
-
-                CoroutineScope(Dispatchers.Main).launch {
-                    val location = locationHandler.getCurrentLocation()!!
-                    // Do something with the location
-                    location?.let {
-                        Log.d("Location", "Latitude: ${it.latitude}, Longitude: ${it.longitude}")
+                    this.controller.zoomTo(18)
 
 
 
-                        // Create a GeoPoint with the location's latitude and longitude
-                        val center = GeoPoint(it.latitude, it.longitude)
+                    setTileSource(TileSourceFactory.MAPNIK)
 
-                        val firstMarker = Marker(this@apply)
-                        firstMarker.position = center
+                    var locationHandler = GPSHandler(this.context)
 
-                        firstMarker.setAnchor(Marker.ANCHOR_BOTTOM, Marker.ANCHOR_CENTER)
-                        //firstMarker.icon = ContextCompat.getDrawable(context, R.drawable.currentlocation)
-                        firstMarker.image = ContextCompat.getDrawable(context, R.drawable.currentlocation)
-                        this@apply.overlays.add(firstMarker)
-                        // Set the center of the map view to the new location
-                        this@apply.controller.setCenter(center)
-                        this@apply.controller.animateTo(center)
+
+                    CoroutineScope(Dispatchers.Main).launch {
+
+                        val location = locationHandler.getCurrentLocation()!!
+                        // Do something with the location
+                        location?.let {
+                            Log.d(
+                                "Location",
+                                "Latitude: ${it.latitude}, Longitude: ${it.longitude}"
+                            )
+                            // Create a GeoPoint with the location's latitude and longitude
+                            val center = GeoPoint(it.latitude, it.longitude)
+                            // Set the center of the map view to the new location
+                            this@apply.controller.animateTo(center)
+                        }
                     }
+
+
+                    val locationOverlay =
+                        MyLocationNewOverlay(GpsMyLocationProvider(this.context), this)
+                    locationOverlay.enableMyLocation()
+                    locationOverlay.enableFollowLocation()
+                    locationOverlay.isDrawAccuracyEnabled = true
+
+
+                    val x = R.drawable.currentlocation
+                    // Convert the drawable resource into a Bitmap
+                    val bitmap: Bitmap = BitmapFactory.decodeResource(resources, x)
+
+
+                    this.getLocalVisibleRect(Rect())
+                    this.overlays.add(locationOverlay)
+                    this.invalidate()
+
+
+                    setOnClickListener {
+                        // Call the callback to notify the parent about the map change
+                        onMapChanged(this)
+                    }
+
+
+                    //maxZoomLevel = 2.0
                 }
 
 
+            },
+            update = { view ->
 
 
 
+                //view.get(selectedItem)
+                //map.zoomController.activate()
 
-                //maxZoomLevel = 2.0
+                // View's been inflated or state read in this block has been updated
+                // Add logic here if necessary
+
+                // As selectedItem is read here, AndroidView will recompose
+                // whenever the state changes
+                // Example of Compose -> View communication
+
+
+            }
+        )
+
+        // Compose button overlaid on top of the custom view
+            LargeFloatingActionButton(
+                onClick = { map.controller.zoomTo(8)
+                          map.invalidate()
+
+                          },
+                containerColor = BottomAppBarDefaults.bottomAppBarFabColor,
+                elevation = FloatingActionButtonDefaults.bottomAppBarFabElevation(),
+                modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp).size(48.dp)
+            ) {
+                var recIcon = Icons.Filled.AddCircle
+
+
+                Icon(recIcon, "Localized description",Modifier.size(32.dp), tint = androidx.compose.ui.graphics.Color.Gray)
+
+
             }
 
+    }
 
 
-
-        },
-        update = { view ->
-
-            view.rootView.id = selectedItem
-
-            //view.get(selectedItem)
-            //map.zoomController.activate()
-
-            // View's been inflated or state read in this block has been updated
-            // Add logic here if necessary
-
-            // As selectedItem is read here, AndroidView will recompose
-            // whenever the state changes
-            // Example of Compose -> View communication
-
-
-        }
-    )
 }
 
-
+fun onMapChanged(mapView: MapView) {
+    TODO("Not yet implemented")
+}
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -339,7 +377,7 @@ fun BottomAppBarExample(map: MapView) {
                 },
                 floatingActionButton = {
                     FloatingActionButton(
-                        onClick = { /* do something */ },
+                        onClick = { map.controller.zoomTo(10) },
                         containerColor = BottomAppBarDefaults.bottomAppBarFabColor,
                         elevation = FloatingActionButtonDefaults.bottomAppBarFabElevation()
                     ) {
@@ -361,10 +399,13 @@ fun BottomAppBarExample(map: MapView) {
             verticalArrangement = Arrangement.spacedBy(16.dp),
 
         ) {
+
+
             CustomView(map)
+
         }
 
-        R.id.map
+        //R.id.map
     }
 }
 
