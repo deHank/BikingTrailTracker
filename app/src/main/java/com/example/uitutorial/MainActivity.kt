@@ -4,54 +4,42 @@ import GPSHandler
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.graphics.Color
 import android.graphics.Rect
-import android.graphics.drawable.Icon
 import android.location.Location
+import android.location.LocationListener
 import android.location.LocationManager
 import android.os.Bundle
 import android.preference.PreferenceManager
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.List
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.BottomAppBarDefaults
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LargeFloatingActionButton
-import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults.topAppBarColors
@@ -63,26 +51,18 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
-import androidx.core.view.TintableBackgroundView
-import androidx.core.view.get
-import androidx.lifecycle.findViewTreeViewModelStoreOwner
-import com.example.uitutorial.ui.theme.UITutorialTheme
+import com.example.uitutorial.gpsDataHandler.PastTracksViewer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import org.osmdroid.config.Configuration.*
+import org.osmdroid.config.Configuration.getInstance
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
-import org.osmdroid.views.overlay.Marker
-import org.osmdroid.views.overlay.Overlay
 import org.osmdroid.views.overlay.compass.CompassOverlay
 import org.osmdroid.views.overlay.gestures.RotationGestureOverlay
 import org.osmdroid.views.overlay.gridlines.LatLonGridlineOverlay2
@@ -101,13 +81,54 @@ class MainActivity : ComponentActivity() {
 
     private lateinit var location: Location
 
+
+
+    private val locationListener = object : LocationListener {
+        override fun onLocationChanged(location: Location) {
+            // Handle location updates
+            Log.d("LocationListener", "Location changed: $location")
+            // You can update the UI or perform any action based on the new location
+        }
+
+        override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {
+            // Handle status changes of the location provider
+            Log.d("LocationListener", "Status changed: $provider, $status")
+        }
+
+        override fun onProviderEnabled(provider: String) {
+            // Handle when the location provider is enabled
+            Log.d("LocationListener", "Provider enabled: $provider")
+        }
+
+        override fun onProviderDisabled(provider: String) {
+            // Handle when the location provider is disabled
+            Log.d("LocationListener", "Provider disabled: $provider")
+        }
+    }
+
+
+
+
     //final lateinit var pLocationManager : LocationManager
 
 
+    init {
 
+    }
+
+
+    @SuppressLint("MissingPermission")
     override fun onCreate(savedInstanceState: Bundle?) {
 
+        val locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
+
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,1000, 1f, locationListener)
+
+
+
         getInstance().load(this, PreferenceManager.getDefaultSharedPreferences(this))
+
+
 
         map = MapView(this)
 
@@ -136,7 +157,7 @@ class MainActivity : ComponentActivity() {
         }
 
 
-        this.map.controller.setZoom(1.0)
+        map.controller.setZoom(1.0)
         goToCurrentLocation()
 
 
@@ -319,16 +340,16 @@ fun CustomView(map: MapView) {
                         locationOverlay = overlay as MyLocationNewOverlay
                     }
                 }
-
-
-                locationOverlay.enableMyLocation()
                 locationOverlay.enableFollowLocation()
                 locationOverlay.isDrawAccuracyEnabled = true
                 map.invalidate()
             },
             containerColor = BottomAppBarDefaults.bottomAppBarFabColor,
             elevation = FloatingActionButtonDefaults.bottomAppBarFabElevation(),
-            modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp).size(48.dp)
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(24.dp)
+                .size(48.dp)
         ) {
             var recIcon = Icons.Filled.AddCircle
 
@@ -351,6 +372,8 @@ fun onMapChanged(mapView: MapView) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BottomAppBarExample(map: MapView) {
+
+    val context = LocalContext.current
     Scaffold(
         topBar = {
             TopAppBar(
@@ -369,8 +392,11 @@ fun BottomAppBarExample(map: MapView) {
                 modifier = Modifier
                     .clip(shape = RoundedCornerShape(20.dp)),
                 actions = {
-                    IconButton(onClick = { /* do something */ }) {
-                        Icon(Icons.Filled.Home, contentDescription = "Localized description")
+                    IconButton(onClick = { map.controller.zoomTo(18)
+                        val intent = Intent(context, PastTracksViewer::class.java)
+                        TrackWriter(context)
+                        context.startActivity(intent) }) {
+                        Icon(Icons.Filled.List, contentDescription = "Localized description")
                     }
                     IconButton(onClick = { /* do something */ }) {
                         Icon(
@@ -393,7 +419,8 @@ fun BottomAppBarExample(map: MapView) {
                 },
                 floatingActionButton = {
                     FloatingActionButton(
-                        onClick = { map.controller.zoomTo(18) },
+                        onClick = {
+                        },
                         containerColor = BottomAppBarDefaults.bottomAppBarFabColor,
                         elevation = FloatingActionButtonDefaults.bottomAppBarFabElevation()
                     ) {

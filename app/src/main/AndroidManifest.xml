@@ -24,6 +24,11 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".gpsDataHandler.PastTracksViewer"
+            android:label="Past Tracks Viewer">
+        </activity>
+
 
     </application>
 
