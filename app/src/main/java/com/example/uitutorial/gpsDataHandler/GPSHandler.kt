@@ -9,12 +9,13 @@ import android.location.LocationProvider
 import android.os.Bundle
 import android.os.Handler
 import android.os.HandlerThread
+import android.util.Log
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.ContextCompat.getSystemService
 import androidx.core.location.LocationListenerCompat
 import androidx.core.location.LocationManagerCompat
-import androidx.core.location.LocationRequestCompat
+import com.example.uitutorial.gpsDataHandler.aLocationListener
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
@@ -34,7 +35,7 @@ class GPSHandler(private val context: Context) {
 
 
 
-    private lateinit var locationListener: LocationListener
+
 
     companion object {
         private const val MIN_DISTANCE_CHANGE_FOR_UPDATES: Float = 10f // meters
@@ -47,31 +48,11 @@ class GPSHandler(private val context: Context) {
 
     }
 
+    @SuppressLint("MissingPermission")
     private fun createLocationListener() {
-        locationListener = object : LocationListener {
-            override fun onLocationChanged(location: Location) {
-                // Update the last known location whenever a new location is received
-                lastKnownLocation = location
-            }
-        }
-
-        if (ActivityCompat.checkSelfPermission(
-                this.context,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
-                this.context,
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return
-        }
+        Log.d("GPS Handler", "GPS Handler was created")
+        val locationListener = aLocationListener()
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, .1f, locationListener)
 
 
 

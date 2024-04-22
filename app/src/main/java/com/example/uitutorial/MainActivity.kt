@@ -122,7 +122,7 @@ class MainActivity : ComponentActivity() {
 
         val locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
 
-        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,1000, 1f, locationListener)
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,1000, .1f, locationListener)
 
 
 
@@ -421,6 +421,9 @@ fun BottomAppBarExample(map: MapView) {
                 floatingActionButton = {
                     FloatingActionButton(
                         onClick = {
+                            Log.d("Floating Action Button", "was pressed")
+                            GPSHandler
+
                         },
                         containerColor = BottomAppBarDefaults.bottomAppBarFabColor,
                         elevation = FloatingActionButtonDefaults.bottomAppBarFabElevation()
