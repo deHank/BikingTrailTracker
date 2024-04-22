@@ -342,6 +342,7 @@ fun CustomView(map: MapView) {
                 }
                 locationOverlay.enableFollowLocation()
                 locationOverlay.isDrawAccuracyEnabled = true
+
                 map.invalidate()
             },
             containerColor = BottomAppBarDefaults.bottomAppBarFabColor,
@@ -392,7 +393,7 @@ fun BottomAppBarExample(map: MapView) {
                 modifier = Modifier
                     .clip(shape = RoundedCornerShape(20.dp)),
                 actions = {
-                    IconButton(onClick = { map.controller.zoomTo(18)
+                    IconButton(onClick = {
                         val intent = Intent(context, PastTracksViewer::class.java)
                         TrackWriter(context)
                         context.startActivity(intent) }) {
