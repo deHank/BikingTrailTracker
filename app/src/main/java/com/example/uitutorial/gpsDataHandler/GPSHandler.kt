@@ -33,6 +33,8 @@ class GPSHandler(private val context: Context) {
         context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
 
     private var lastKnownLocation: Location? = null
+    private lateinit var looperThread: Thread
+    private lateinit var backgroundHandler: Handler
 
 
 
@@ -45,6 +47,12 @@ class GPSHandler(private val context: Context) {
     }
 
     init {
+        looperThread = Thread {
+            Looper.prepare()
+            backgroundHandler = Handler(Looper.myLooper()!!)
+            Looper.loop()
+        }
+        looperThread.start()
         createLocationListener()
 
 
@@ -74,11 +82,11 @@ class GPSHandler(private val context: Context) {
 
         val looper = Looper.myLooper() ?: Looper.getMainLooper()
         val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
-        val locationRequest = LocationRequestCompat.Builder(200).setQuality(LocationRequestCompat.QUALITY_HIGH_ACCURACY).setMinUpdateIntervalMillis(100).setMaxUpdateDelayMillis(150).build()
+        val locationRequest = LocationRequestCompat.Builder(200).setQuality(LocationRequestCompat.QUALITY_HIGH_ACCURACY).setMinUpdateIntervalMillis(100).build()
         Log.d("Looper", "before starting created")
         LocationManagerCompat.requestLocationUpdates(
             locationManager,
-            LocationManager.GPS_PROVIDER,
+            LocationManager.FUSED_PROVIDER,
             locationRequest,
             locationListener,
             looper
