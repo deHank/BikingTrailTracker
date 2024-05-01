@@ -9,12 +9,15 @@ import android.location.LocationProvider
 import android.os.Bundle
 import android.os.Handler
 import android.os.HandlerThread
+import android.os.Looper
 import android.util.Log
+import androidx.activity.ComponentActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.ContextCompat.getSystemService
 import androidx.core.location.LocationListenerCompat
 import androidx.core.location.LocationManagerCompat
+import androidx.core.location.LocationRequestCompat
 import com.example.uitutorial.gpsDataHandler.aLocationListener
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -51,12 +54,38 @@ class GPSHandler(private val context: Context) {
     @SuppressLint("MissingPermission")
     private fun createLocationListener() {
         Log.d("GPS Handler", "GPS Handler was created")
-        val locationListener = aLocationListener()
-        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, .1f, locationListener)
+        val locationListener = object : LocationListenerCompat {
+            override fun onLocationChanged(location: Location) {
+                // Handle location updates
+                Log.d("LocationListener", "Location changed: $location")
+                // You can update the UI or perform any action based on the new location
+            }
 
+            override fun onProviderEnabled(provider: String) {
+                // Handle when the location provider is enabled
+                Log.d("LocationListener", "Provider enabled: $provider")
+            }
 
+            override fun onProviderDisabled(provider: String) {
+                // Handle when the location provider is disabled
+                Log.d("LocationListener", "Provider disabled: $provider")
+            }
+        }
 
+        val looper = Looper.myLooper() ?: Looper.getMainLooper()
+        val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        val locationRequest = LocationRequestCompat.Builder(200).setQuality(LocationRequestCompat.QUALITY_HIGH_ACCURACY).setMinUpdateIntervalMillis(100).setMaxUpdateDelayMillis(150).build()
+        Log.d("Looper", "before starting created")
+        LocationManagerCompat.requestLocationUpdates(
+            locationManager,
+            LocationManager.GPS_PROVIDER,
+            locationRequest,
+            locationListener,
+            looper
+        )
+        Log.d("Location Listener", "was created")
     }
+
 
 
 

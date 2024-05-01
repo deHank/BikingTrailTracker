@@ -3,16 +3,15 @@ package com.example.uitutorial
 import GPSHandler
 import android.Manifest
 import android.annotation.SuppressLint
-import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Rect
 import android.location.Location
-import android.location.LocationListener
 import android.location.LocationManager
 import android.os.Bundle
+import android.os.Handler
 import android.preference.PreferenceManager
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -28,7 +27,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.BottomAppBarDefaults
@@ -80,49 +78,21 @@ class MainActivity : ComponentActivity() {
     private lateinit var locationHandler: GPSHandler
 
     private lateinit var location: Location
-
-
-
-    private val locationListener = object : LocationListener {
-        override fun onLocationChanged(location: Location) {
-            // Handle location updates
-            Log.d("LocationListener", "Location changed: $location")
-            // You can update the UI or perform any action based on the new location
-        }
-
-        override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {
-            // Handle status changes of the location provider
-            Log.d("LocationListener", "Status changed: $provider, $status")
-        }
-
-        override fun onProviderEnabled(provider: String) {
-            // Handle when the location provider is enabled
-            Log.d("LocationListener", "Provider enabled: $provider")
-        }
-
-        override fun onProviderDisabled(provider: String) {
-            // Handle when the location provider is disabled
-            Log.d("LocationListener", "Provider disabled: $provider")
-        }
-    }
+    private lateinit var handler: Handler
 
 
 
 
-    //final lateinit var pLocationManager : LocationManager
 
-
-    init {
-
-    }
 
 
     @SuppressLint("MissingPermission")
     override fun onCreate(savedInstanceState: Bundle?) {
 
-        val locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
 
-        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,1000, .1f, locationListener)
+
+       // locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,1000, .01f, locationListener)
+
 
 
 
@@ -332,10 +302,7 @@ fun CustomView(map: MapView) {
                 var locationOverlay: MyLocationNewOverlay
                 locationOverlay = MyLocationNewOverlay(map)
                 for(overlay in map.overlays){
-                    Log.d(
-                        "Location",
-                        "Latitude: ${overlay.toString()}, Longitude: "
-                    )
+
                     if(overlay.toString().contains("MyLocation")){
                         locationOverlay = overlay as MyLocationNewOverlay
                     }
@@ -370,6 +337,7 @@ fun onMapChanged(mapView: MapView) {
 }
 
 
+@SuppressLint("MissingPermission")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BottomAppBarExample(map: MapView) {
@@ -421,8 +389,7 @@ fun BottomAppBarExample(map: MapView) {
                 floatingActionButton = {
                     FloatingActionButton(
                         onClick = {
-                            Log.d("Floating Action Button", "was pressed")
-                            GPSHandler
+                            Log.d("Floating red Action Button" , "Button was pressed")
 
                         },
                         containerColor = BottomAppBarDefaults.bottomAppBarFabColor,
