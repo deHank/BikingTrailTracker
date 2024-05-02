@@ -99,6 +99,8 @@ class TrackWriter() {
                 marker.position = geoPoint
                 marker.setAnchor(Marker.ANCHOR_BOTTOM, Marker.ANCHOR_CENTER)
                 map.overlays.add(marker)
+                //removing the previous road overlay
+                map.overlays.remove(roadOverLay)
                 var road = roadManager.getRoad(geoPoints)
                 roadOverLay = RoadManager.buildRoadOverlay(road)
                 map.overlays.add(roadOverLay)
