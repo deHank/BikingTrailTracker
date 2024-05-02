@@ -47,6 +47,8 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+
+
 }
 
 dependencies {
@@ -63,6 +65,7 @@ dependencies {
     implementation(libs.androidx.appcompat)
     implementation(libs.play.services.location)
     implementation(libs.androidx.media3.common)
+    implementation(libs.osmbonuspack)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

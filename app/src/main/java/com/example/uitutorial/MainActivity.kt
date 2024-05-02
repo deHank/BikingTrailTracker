@@ -363,7 +363,7 @@ fun BottomAppBarExample(map: MapView) {
                 actions = {
                     IconButton(onClick = {
                         val intent = Intent(context, PastTracksViewer::class.java)
-                        TrackWriter(context)
+
                         context.startActivity(intent) }) {
                         Icon(Icons.Filled.List, contentDescription = "Localized description")
                     }
@@ -390,7 +390,8 @@ fun BottomAppBarExample(map: MapView) {
                     FloatingActionButton(
                         onClick = {
                             Log.d("Floating red Action Button" , "Button was pressed")
-
+                            val locationHandler = GPSHandler(context)
+                            TrackWriter(map, locationHandler).startWritingTrack(map, locationHandler)
                         },
                         containerColor = BottomAppBarDefaults.bottomAppBarFabColor,
                         elevation = FloatingActionButtonDefaults.bottomAppBarFabElevation()

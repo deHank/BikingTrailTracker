@@ -56,7 +56,6 @@ class GPSHandler(private val context: Context) {
         createLocationListener()
 
 
-
     }
 
     @SuppressLint("MissingPermission")
@@ -65,25 +64,25 @@ class GPSHandler(private val context: Context) {
         val locationListener = object : LocationListenerCompat {
             override fun onLocationChanged(location: Location) {
                 // Handle location updates
-                Log.d("LocationListener", "Location changed: $location")
+                //Log.d("LocationListener", "Location changed: $location")
                 // You can update the UI or perform any action based on the new location
             }
 
             override fun onProviderEnabled(provider: String) {
                 // Handle when the location provider is enabled
-                Log.d("LocationListener", "Provider enabled: $provider")
+                //Log.d("LocationListener", "Provider enabled: $provider")
             }
 
             override fun onProviderDisabled(provider: String) {
                 // Handle when the location provider is disabled
-                Log.d("LocationListener", "Provider disabled: $provider")
+                //Log.d("LocationListener", "Provider disabled: $provider")
             }
         }
 
         val looper = Looper.myLooper() ?: Looper.getMainLooper()
         val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
         val locationRequest = LocationRequestCompat.Builder(200).setQuality(LocationRequestCompat.QUALITY_HIGH_ACCURACY).setMinUpdateIntervalMillis(100).build()
-        Log.d("Looper", "before starting created")
+        //Log.d("Looper", "before starting created")
         LocationManagerCompat.requestLocationUpdates(
             locationManager,
             LocationManager.FUSED_PROVIDER,
@@ -91,7 +90,7 @@ class GPSHandler(private val context: Context) {
             locationListener,
             looper
         )
-        Log.d("Location Listener", "was created")
+        //Log.d("Location Listener", "was created")
     }
 
 
