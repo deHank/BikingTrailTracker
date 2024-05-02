@@ -321,7 +321,6 @@ fun CustomView(map: MapView) {
         ) {
             var recIcon = Icons.Filled.AddCircle
 
-
             Icon(recIcon, "Localized description",Modifier.size(32.dp), tint = androidx.compose.ui.graphics.Color.Gray)
 
 
@@ -391,7 +390,11 @@ fun BottomAppBarExample(map: MapView) {
                         onClick = {
                             Log.d("Floating red Action Button" , "Button was pressed")
                             val locationHandler = GPSHandler(context)
-                            TrackWriter(map, locationHandler).startWritingTrack(map, locationHandler)
+                            CoroutineScope(Dispatchers.IO).launch {
+
+                                TrackWriter().GPSTrackWriter(map)
+                            }
+
                         },
                         containerColor = BottomAppBarDefaults.bottomAppBarFabColor,
                         elevation = FloatingActionButtonDefaults.bottomAppBarFabElevation()
