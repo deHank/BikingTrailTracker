@@ -22,6 +22,8 @@ import org.osmdroid.bonuspack.routing.RoadManager
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
+import java.io.File
+import java.io.FileOutputStream
 import java.util.Date
 import java.util.Locale
 
@@ -91,7 +93,11 @@ class TrackWriter() {
         val locationManager = map.context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
         val locationRequest = LocationRequestCompat.Builder(1000).setQuality(LocationRequestCompat.QUALITY_HIGH_ACCURACY).setMinUpdateIntervalMillis(100).setMinUpdateDistanceMeters(10.0f).build()
         Log.d("Looper", "before starting created")
-        var localFile = kmlDocument.getDefaultPathForAndroid(map.context, "bike ride" + getCurrentDateTime() + ".kml")
+        val tracksDir = File(map.context.filesDir, "tracks")
+        if (!tracksDir.exists()) {
+            tracksDir.mkdirs()
+        }
+        var localFile = File(tracksDir, "bike_ride_${getCurrentDateTime()}.kml")
         val locationListener = object : LocationListenerCompat {
             override fun onLocationChanged(location: Location) {
                 // Handle location updates
@@ -120,6 +126,9 @@ class TrackWriter() {
                 map.invalidate()
                 kmlDocument.mKmlRoot.addOverlay(roadOverLay, kmlDocument)
                 kmlDocument.saveAsKML(localFile)
+
+
+
             }
 
             override fun onProviderEnabled(provider: String) {

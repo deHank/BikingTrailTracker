@@ -1,30 +1,22 @@
 package com.example.uitutorial.gpsDataHandler
 
-import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material3.BottomAppBar
-import androidx.compose.material3.BottomAppBarDefaults
-import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -38,9 +30,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import com.example.uitutorial.CustomView
-import com.example.uitutorial.TrackWriter
-import org.osmdroid.views.MapView
+import java.io.File
 
 class PastTracksViewer: ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?){
@@ -48,7 +38,7 @@ class PastTracksViewer: ComponentActivity() {
 
 
             setContent{
-                BottomAppBarExample()
+                BottomAppBarExample(this)
                     
                 }
             }
@@ -59,7 +49,7 @@ class PastTracksViewer: ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BottomAppBarExample() {
+fun BottomAppBarExample(activity: ComponentActivity) {
 
     val context = LocalContext.current
     Scaffold(
@@ -115,9 +105,12 @@ fun BottomAppBarExample() {
             LazyColumn(
                 modifier = Modifier.weight(1f)
             ) {
-                items(getItemList()) { item ->
+                val itemList = getItemList(activity)
+                items(itemList) { item ->
                     // Each item is contained within its own clickable block
-                    ClickableItem(item = item)
+                    ClickableItem(item = item) { clickedItem ->
+                        Log.d("ClickableItem", "You clicked on file: $clickedItem")
+                    }
                 }
             }
         }
@@ -127,7 +120,7 @@ fun BottomAppBarExample() {
 }
 
 @Composable
-fun ClickableItem(item: String) {
+fun ClickableItem(item: String, onClick: (String) -> Unit) {
     Box(
         modifier = Modifier
             .padding(16.dp)
@@ -144,6 +137,13 @@ fun ClickableItem(item: String) {
     )
 }
 
-fun getItemList(): List<String> {
-    return listOf("Item 1", "Item 2", "Item 3", "Item 4", "Item 5")
+fun getItemList(activity: ComponentActivity): List<String> {
+    val tracksDir = File(activity.filesDir, "tracks")
+    if (!tracksDir.exists()) {
+        tracksDir.mkdirs()
+    }
+    Log.d("PastTracksViewer", "files dir is " + tracksDir.canonicalPath)
+    val files = tracksDir.listFiles() ?: emptyArray()
+    return files.map { it.name }
+
 }
