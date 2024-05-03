@@ -389,6 +389,13 @@ fun BottomAppBarExample(map: MapView) {
                     FloatingActionButton(
                         onClick = {
                             Log.d("Floating red Action Button" , "Button was pressed")
+                            for(overlay in map.overlays){
+
+                                if(!overlay.toString().contains("MyLocation")){
+                                    map.overlays.remove(overlay)
+                                }
+                            }
+
                             val locationHandler = GPSHandler(context)
                             CoroutineScope(Dispatchers.IO).launch {
 

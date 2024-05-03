@@ -3,9 +3,11 @@ package com.example.uitutorial
 import GPSHandler
 import android.annotation.SuppressLint
 import android.content.Context
+import android.icu.text.SimpleDateFormat
 import android.location.Location
 import android.location.LocationManager
 import android.os.HandlerThread
+import android.text.format.Time
 import android.util.Log
 import androidx.core.content.ContextCompat
 import androidx.core.location.LocationListenerCompat
@@ -14,11 +16,14 @@ import androidx.core.location.LocationRequestCompat
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.osmdroid.bonuspack.kml.KmlDocument
 import org.osmdroid.bonuspack.routing.OSRMRoadManager
 import org.osmdroid.bonuspack.routing.RoadManager
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
+import java.util.Date
+import java.util.Locale
 
 
 class TrackWriter() {
@@ -41,6 +46,11 @@ class TrackWriter() {
         }
     }
 
+    fun getCurrentDateTime(): String {
+        val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+        val currentDate = Date()
+        return dateFormat.format(currentDate)
+    }
 
 
 
@@ -64,6 +74,9 @@ class TrackWriter() {
 
     @SuppressLint("MissingPermission")
     fun GPSTrackWriter(map:MapView){
+        val kmlDocument = KmlDocument()
+
+
         val roadManager = OSRMRoadManager(map.context, "test")
         roadManager.setMean(OSRMRoadManager.MEAN_BY_BIKE)
         val geoPoints = ArrayList<GeoPoint>(0)
@@ -78,7 +91,7 @@ class TrackWriter() {
         val locationManager = map.context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
         val locationRequest = LocationRequestCompat.Builder(1000).setQuality(LocationRequestCompat.QUALITY_HIGH_ACCURACY).setMinUpdateIntervalMillis(100).setMinUpdateDistanceMeters(10.0f).build()
         Log.d("Looper", "before starting created")
-
+        var localFile = kmlDocument.getDefaultPathForAndroid(map.context, "bike ride" + getCurrentDateTime() + ".kml")
         val locationListener = object : LocationListenerCompat {
             override fun onLocationChanged(location: Location) {
                 // Handle location updates
@@ -105,8 +118,8 @@ class TrackWriter() {
                 roadOverLay = RoadManager.buildRoadOverlay(road)
                 map.overlays.add(roadOverLay)
                 map.invalidate()
-
-
+                kmlDocument.mKmlRoot.addOverlay(roadOverLay, kmlDocument)
+                kmlDocument.saveAsKML(localFile)
             }
 
             override fun onProviderEnabled(provider: String) {
