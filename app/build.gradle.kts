@@ -66,6 +66,7 @@ dependencies {
     implementation(libs.play.services.location)
     implementation(libs.androidx.media3.common)
     implementation(libs.osmbonuspack)
+    implementation(libs.androidx.navigation.compose)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
