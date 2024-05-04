@@ -150,8 +150,6 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-
-
         map.controller.setZoom(1.0)
         goToCurrentLocation()
 
@@ -327,74 +325,73 @@ fun CustomView(map: MapView) {
 
         // Adds view to Compose
         AndroidView(
-
             modifier = Modifier.fillMaxSize(), // Occupy the max size in the Compose UI tree
             factory = {
                 // Creates view
+
                 map.apply {
 
+                    if(map.overlays.isEmpty()) {
+                        val overlay = LatLonGridlineOverlay2();
+                        val rotationGestureOverlay = RotationGestureOverlay(this)
+                        rotationGestureOverlay.isEnabled
 
-                    val overlay = LatLonGridlineOverlay2();
-                    //this.overlays.add(overlay);
-                    val rotationGestureOverlay = RotationGestureOverlay(this)
-                    rotationGestureOverlay.isEnabled
+                        this.setMultiTouchControls(true)
+                        this.overlays.add(rotationGestureOverlay)
 
-                    this.setMultiTouchControls(true)
-                    this.overlays.add(rotationGestureOverlay)
+                        val compassOverlay = CompassOverlay(this.context, this)
+                        compassOverlay.enableCompass()
+                        compassOverlay.isPointerMode = true
+                        this.overlays.add(compassOverlay)
 
-                    val compassOverlay = CompassOverlay(this.context, this)
-                    compassOverlay.enableCompass()
-                    compassOverlay.isPointerMode = true
-                    this.overlays.add(compassOverlay)
-
-                    this.controller.zoomTo(18)
-
+                        this.controller.zoomTo(18)
 
 
-                    setTileSource(TileSourceFactory.MAPNIK)
 
-                    var locationHandler = GPSHandler(this.context)
+                        setTileSource(TileSourceFactory.MAPNIK)
+
+                        var locationHandler = GPSHandler(this.context)
 
 
-                    CoroutineScope(Dispatchers.Main).launch {
+                        CoroutineScope(Dispatchers.Main).launch {
 
-                        val location = locationHandler.getCurrentLocation()!!
-                        // Do something with the location
-                        location?.let {
-                            Log.d(
-                                "Location",
-                                "Latitude: ${it.latitude}, Longitude: ${it.longitude}"
-                            )
-                            // Create a GeoPoint with the location's latitude and longitude
-                            val center = GeoPoint(it.latitude, it.longitude)
-                            // Set the center of the map view to the new location
-                            this@apply.controller.animateTo(center)
+                            val location = locationHandler.getCurrentLocation()!!
+                            // Do something with the location
+                            location?.let {
+                                Log.d(
+                                    "Location",
+                                    "Latitude: ${it.latitude}, Longitude: ${it.longitude}"
+                                )
+                                // Create a GeoPoint with the location's latitude and longitude
+                                val center = GeoPoint(it.latitude, it.longitude)
+                                // Set the center of the map view to the new location
+                                this@apply.controller.animateTo(center)
+                            }
+                        }
+
+
+                        val locationOverlay =
+                            MyLocationNewOverlay(GpsMyLocationProvider(this.context), this)
+                        locationOverlay.enableMyLocation()
+                        locationOverlay.enableFollowLocation()
+                        locationOverlay.isDrawAccuracyEnabled = true
+
+
+                        val x = R.drawable.currentlocation
+                        // Convert the drawable resource into a Bitmap
+                        val bitmap: Bitmap = BitmapFactory.decodeResource(resources, x)
+
+
+                        this.getLocalVisibleRect(Rect())
+                        this.overlays.add(locationOverlay)
+                        this.invalidate()
+
+
+                        setOnClickListener {
+                            // Call the callback to notify the parent about the map change
+                            onMapChanged(this)
                         }
                     }
-
-
-                    val locationOverlay =
-                        MyLocationNewOverlay(GpsMyLocationProvider(this.context), this)
-                    locationOverlay.enableMyLocation()
-                    locationOverlay.enableFollowLocation()
-                    locationOverlay.isDrawAccuracyEnabled = true
-
-
-                    val x = R.drawable.currentlocation
-                    // Convert the drawable resource into a Bitmap
-                    val bitmap: Bitmap = BitmapFactory.decodeResource(resources, x)
-
-
-                    this.getLocalVisibleRect(Rect())
-                    this.overlays.add(locationOverlay)
-                    this.invalidate()
-
-
-                    setOnClickListener {
-                        // Call the callback to notify the parent about the map change
-                        onMapChanged(this)
-                    }
-
 
                     //maxZoomLevel = 2.0
                 }
@@ -484,8 +481,10 @@ fun BottomAppBarExample(navController: NavHostController, map1: MapView) {
                     .clip(shape = RoundedCornerShape(20.dp)),
                 actions = {
                     IconButton(onClick = {
+                        map1.setDestroyMode(false)
 
                         navController.navigate("pastTracksViewer")
+                        map1.invalidate()
                         }) {
                         Icon(Icons.Filled.List, contentDescription = "view past tracks")
                     }
