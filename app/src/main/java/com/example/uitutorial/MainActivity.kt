@@ -68,10 +68,14 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.osmdroid.bonuspack.kml.KmlDocument
+import org.osmdroid.bonuspack.kml.KmlGroundOverlay
+import org.osmdroid.bonuspack.kml.Style
+import org.osmdroid.bonuspack.routing.OSRMRoadManager
 import org.osmdroid.config.Configuration.getInstance
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
+import org.osmdroid.views.overlay.FolderOverlay
 import org.osmdroid.views.overlay.compass.CompassOverlay
 import org.osmdroid.views.overlay.gestures.RotationGestureOverlay
 import org.osmdroid.views.overlay.gridlines.LatLonGridlineOverlay2
@@ -220,6 +224,11 @@ class MainActivity : ComponentActivity() {
         map.onPause()  //needed for compass, my location overlays, v6.0.0 and up
     }
 
+    override fun onBackPressed() {
+
+        // Call super method to handle normal back button behavior
+        super.onBackPressed()
+    }
 
 }
 
@@ -288,7 +297,11 @@ fun PastTracksViewerActivity(map: MapView) {
                         Log.d("ClickableItem", "You clicked on file: ${file.name}")
                         var kmlDocument = KmlDocument()
                         kmlDocument.parseKMLFile(file)
-
+                        val kmlOverlay = kmlDocument.mKmlRoot.buildOverlay(map, null, null, kmlDocument) as FolderOverlay
+                        map.overlays.add(kmlOverlay)
+                        map.invalidate()
+                        val bb = kmlDocument.mKmlRoot.getBoundingBox()
+                        map.zoomToBoundingBox(bb, true)
                     }
                 }
             }
@@ -399,20 +412,6 @@ fun CustomView(map: MapView) {
 
             },
             update = { view ->
-
-
-
-                //view.get(selectedItem)
-                //map.zoomController.activate()
-
-                // View's been inflated or state read in this block has been updated
-                // Add logic here if necessary
-
-                // As selectedItem is read here, AndroidView will recompose
-                // whenever the state changes
-                // Example of Compose -> View communication
-
-
             }
         )
 
