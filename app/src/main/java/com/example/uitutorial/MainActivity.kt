@@ -24,14 +24,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.BottomAppBarDefaults
@@ -45,7 +42,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarDefaults.topAppBarColors
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -67,15 +63,10 @@ import com.example.uitutorial.ui.theme.UITutorialTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import org.osmdroid.bonuspack.kml.KmlDocument
-import org.osmdroid.bonuspack.kml.KmlGroundOverlay
-import org.osmdroid.bonuspack.kml.Style
-import org.osmdroid.bonuspack.routing.OSRMRoadManager
 import org.osmdroid.config.Configuration.getInstance
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
-import org.osmdroid.views.overlay.FolderOverlay
 import org.osmdroid.views.overlay.compass.CompassOverlay
 import org.osmdroid.views.overlay.gestures.RotationGestureOverlay
 import org.osmdroid.views.overlay.gridlines.LatLonGridlineOverlay2
@@ -254,124 +245,7 @@ fun getFileList(context: Context): List<File> {
 }
 
 
-@Composable
-fun CustomView(map: MapView) {
-    var selectedItem by remember { mutableStateOf(0) }
-    Box(modifier = Modifier.fillMaxSize()) {
 
-        // Adds view to Compose
-        AndroidView(
-            modifier = Modifier.fillMaxSize(), // Occupy the max size in the Compose UI tree
-            factory = {
-                // Creates view
-
-                map.apply {
-
-                    if(map.overlays.isEmpty()) {
-                        val overlay = LatLonGridlineOverlay2();
-                        val rotationGestureOverlay = RotationGestureOverlay(this)
-                        rotationGestureOverlay.isEnabled
-
-                        this.setMultiTouchControls(true)
-                        this.overlays.add(rotationGestureOverlay)
-
-                        val compassOverlay = CompassOverlay(this.context, this)
-                        compassOverlay.enableCompass()
-                        compassOverlay.isPointerMode = true
-                        this.overlays.add(compassOverlay)
-
-                        this.controller.zoomTo(18)
-
-
-
-                        setTileSource(TileSourceFactory.MAPNIK)
-
-                        var locationHandler = GPSHandler(this.context)
-
-
-                        CoroutineScope(Dispatchers.Main).launch {
-
-                            val location = locationHandler.getCurrentLocation()!!
-                            // Do something with the location
-                            location?.let {
-                                Log.d(
-                                    "Location",
-                                    "Latitude: ${it.latitude}, Longitude: ${it.longitude}"
-                                )
-                                // Create a GeoPoint with the location's latitude and longitude
-                                val center = GeoPoint(it.latitude, it.longitude)
-                                // Set the center of the map view to the new location
-                                this@apply.controller.animateTo(center)
-                            }
-                        }
-
-
-                        val locationOverlay =
-                            MyLocationNewOverlay(GpsMyLocationProvider(this.context), this)
-                        locationOverlay.enableMyLocation()
-                        locationOverlay.enableFollowLocation()
-                        locationOverlay.isDrawAccuracyEnabled = true
-
-
-                        val x = R.drawable.currentlocation
-                        // Convert the drawable resource into a Bitmap
-                        val bitmap: Bitmap = BitmapFactory.decodeResource(resources, x)
-
-
-                        this.getLocalVisibleRect(Rect())
-                        this.overlays.add(locationOverlay)
-                        this.invalidate()
-
-
-                        setOnClickListener {
-                            // Call the callback to notify the parent about the map change
-                            onMapChanged(this)
-                        }
-                    }
-
-                    //maxZoomLevel = 2.0
-                }
-
-
-            },
-            update = { view ->
-            }
-        )
-
-        // Compose button overlaid on top of the custom view
-        LargeFloatingActionButton(
-            onClick = { map.controller.zoomTo(18)
-                var locationOverlay: MyLocationNewOverlay
-                locationOverlay = MyLocationNewOverlay(map)
-                for(overlay in map.overlays){
-
-                    if(overlay.toString().contains("MyLocation")){
-                        locationOverlay = overlay as MyLocationNewOverlay
-                    }
-                }
-                locationOverlay.enableFollowLocation()
-                locationOverlay.isDrawAccuracyEnabled = true
-
-                map.invalidate()
-            },
-            containerColor = BottomAppBarDefaults.bottomAppBarFabColor,
-            elevation = FloatingActionButtonDefaults.bottomAppBarFabElevation(),
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(24.dp)
-                .size(48.dp)
-        ) {
-            var recIcon = Icons.Filled.AddCircle
-
-            Icon(recIcon, "Localized description",Modifier.size(32.dp), tint = androidx.compose.ui.graphics.Color.Gray)
-
-
-        }
-
-    }
-
-
-}
 
 fun onMapChanged(mapView: MapView) {
     TODO("Not yet implemented")
@@ -470,7 +344,7 @@ fun BottomAppBarExample(navController: NavHostController, map1: MapView) {
             ) {
 
 
-            CustomView(map1)
+            MapHomeView(map1)
 
         }
 
