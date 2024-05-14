@@ -55,27 +55,15 @@ class TrackWriter() {
     }
 
 
-
-
     @SuppressLint("MissingPermission")
-    fun startWritingTrack(map: MapView, locationHandler:GPSHandler){
-
-
-
+    fun startWritingTrack(map: MapView, locationHandler: GPSHandler) {
         map.invalidate()
-
-
-
-
         CoroutineScope(Dispatchers.IO).launch {
-
-
         }
-
     }
 
     @SuppressLint("MissingPermission")
-    fun GPSTrackWriter(map:MapView){
+    fun GPSTrackWriter(map: MapView) {
         val kmlDocument = KmlDocument()
 
 
@@ -90,8 +78,11 @@ class TrackWriter() {
         var roadOverLay = RoadManager.buildRoadOverlay(road)
         map.overlays.add(roadOverLay)
         map.invalidate()
-        val locationManager = map.context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
-        val locationRequest = LocationRequestCompat.Builder(1000).setQuality(LocationRequestCompat.QUALITY_HIGH_ACCURACY).setMinUpdateIntervalMillis(100).setMinUpdateDistanceMeters(10.0f).build()
+        val locationManager =
+            map.context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        val locationRequest = LocationRequestCompat.Builder(1000)
+            .setQuality(LocationRequestCompat.QUALITY_HIGH_ACCURACY).setMinUpdateIntervalMillis(100)
+            .setMinUpdateDistanceMeters(10.0f).build()
         Log.d("Looper", "before starting created")
         val tracksDir = File(map.context.filesDir, "tracks")
         if (!tracksDir.exists()) {
@@ -126,7 +117,6 @@ class TrackWriter() {
                 map.invalidate()
                 kmlDocument.mKmlRoot.addOverlay(roadOverLay, kmlDocument)
                 kmlDocument.saveAsKML(localFile)
-
 
 
             }
