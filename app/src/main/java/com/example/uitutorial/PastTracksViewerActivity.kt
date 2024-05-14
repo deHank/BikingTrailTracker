@@ -35,6 +35,7 @@ import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.FolderOverlay
 import java.io.File
 
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PastTracksViewerActivity(map: MapView) {
@@ -88,6 +89,7 @@ fun PastTracksViewerActivity(map: MapView) {
             modifier = Modifier
                 .padding(innerPadding)
                 .clip(shape = RoundedCornerShape(20.dp))
+
         ) {
             // Display a list of clickable items using LazyColumn
             LazyColumn()
