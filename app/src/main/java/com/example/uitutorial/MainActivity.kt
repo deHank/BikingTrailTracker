@@ -223,17 +223,6 @@ class MainActivity : ComponentActivity() {
 
 }
 
-@Composable
-fun ClickableItem(file: File, onClick: () -> Unit) {
-    Box(
-        modifier = Modifier
-            .padding(8.dp)
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-    ) {
-        Text(text = file.name)
-    }
-}
 
 fun getFileList(context: Context): List<File> {
         val tracksDir = File(context.filesDir, "tracks")
