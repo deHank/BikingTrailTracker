@@ -4,7 +4,6 @@ import android.util.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -23,18 +22,14 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import org.osmdroid.bonuspack.kml.KmlDocument
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.FolderOverlay
 import java.io.File
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -89,7 +84,6 @@ fun PastTracksViewerActivity(map: MapView) {
             modifier = Modifier
                 .padding(innerPadding)
                 .clip(shape = RoundedCornerShape(20.dp))
-
         ) {
             // Display a list of clickable items using LazyColumn
             LazyColumn()
@@ -97,7 +91,7 @@ fun PastTracksViewerActivity(map: MapView) {
                 val fileList = getFileList(context = context)
                 items(fileList) { file ->
                     // Each item is contained within its own clickable block
-                    ClickableItem(file = file, onClick =  {
+                    ClickableItem(file = file) {
                         Log.d("ClickableItem", "You clicked on file: ${file.name}")
                         var kmlDocument = KmlDocument()
                         kmlDocument.parseKMLFile(file)
@@ -106,11 +100,7 @@ fun PastTracksViewerActivity(map: MapView) {
                         map.invalidate()
                         val bb = kmlDocument.mKmlRoot.getBoundingBox()
                         map.zoomToBoundingBox(bb, true)
-                    },
-                        onLongPress = {
-                            Log.d("ClickableItem", "You long-pressed on file: ${file.name}")
-                        }
-                    )
+                    }
                 }
             }
         }
@@ -118,19 +108,12 @@ fun PastTracksViewerActivity(map: MapView) {
 }
 
 @Composable
-fun ClickableItem(file: File, onClick: () -> Unit, onLongPress: () -> Unit) {
+fun ClickableItem(file: File, onClick: () -> Unit) {
     Box(
         modifier = Modifier
-            .padding(8.dp)
-            .fillMaxWidth()
-            .pointerInput(Unit) {
-                detectLongPressGesture(onLongPress = onLongPress)
-            }
+            .padding(16.dp)
+            .clickable(onClick = onClick)
     ) {
         Text(text = file.name)
     }
-}
-
-fun detectLongPressGesture(onLongPress: () -> Unit) {
-
 }
