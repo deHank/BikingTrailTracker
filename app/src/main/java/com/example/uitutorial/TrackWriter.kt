@@ -155,7 +155,7 @@ class TrackWriter() {
                 kmlTrack.saveAsKML(writer)
                 writer.write("</Placemark>\n")
                 writer.write("</Document>\n")
-                writer.write("</kml>\n");
+                writer.write("</kml>\n")
                 writer.flush()
                 writer.close()
             }

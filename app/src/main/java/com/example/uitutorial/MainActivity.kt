@@ -142,6 +142,9 @@ class MainActivity : ComponentActivity() {
                         // Content for the Past Tracks Viewer screen
                         PastTracksViewerActivity(map)
                     }
+                    composable("CurrentTrackViewerActivity"){
+                        CurrentTrackViewerActivity(map = map)
+                    }
                 }
             }
         }
@@ -273,7 +276,11 @@ fun BottomAppBarExample(navController: NavHostController, map1: MapView) {
                         }) {
                         Icon(Icons.Filled.List, contentDescription = "view past tracks")
                     }
-                    IconButton(onClick = { /* do something */ }) {
+                    IconButton(onClick = { map1.setDestroyMode(false)
+
+                        navController.navigate("CurrentTrackViewerActivity")
+                        map1.invalidate() }) {
+
                         Icon(
                             Icons.Filled.Edit,
                             contentDescription = "Localized description",
