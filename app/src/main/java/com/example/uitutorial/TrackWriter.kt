@@ -3,6 +3,7 @@ package com.example.uitutorial
 import GPSHandler
 import android.annotation.SuppressLint
 import android.content.Context
+import android.graphics.Color
 import android.icu.text.SimpleDateFormat
 import android.location.Location
 import android.location.LocationManager
@@ -17,13 +18,24 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.osmdroid.bonuspack.kml.KmlDocument
+import org.osmdroid.bonuspack.kml.KmlFeature
+import org.osmdroid.bonuspack.kml.KmlFeature.Styler
+import org.osmdroid.bonuspack.kml.KmlPlacemark
+import org.osmdroid.bonuspack.kml.KmlTrack
+import org.osmdroid.bonuspack.kml.Style
 import org.osmdroid.bonuspack.routing.OSRMRoadManager
 import org.osmdroid.bonuspack.routing.RoadManager
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
+import org.osmdroid.views.overlay.Polyline
+import java.io.BufferedWriter
 import java.io.File
 import java.io.FileOutputStream
+import java.io.FileWriter
+import java.io.Writer
+import java.time.LocalDate
+import java.time.LocalTime
 import java.util.Date
 import java.util.Locale
 
@@ -65,6 +77,14 @@ class TrackWriter() {
     @SuppressLint("MissingPermission")
     fun GPSTrackWriter(map: MapView) {
         val kmlDocument = KmlDocument()
+        val kmlTrack = KmlTrack()
+        val kmlPlaceMark = KmlPlacemark()
+        val polyLine = Polyline()
+        polyLine.width = 1.0f
+        polyLine.color = Color.GREEN
+
+
+
 
 
         val roadManager = OSRMRoadManager(map.context, "test")
@@ -73,6 +93,7 @@ class TrackWriter() {
         val handlerThread = HandlerThread("HandlerThread")
         handlerThread.start()
         val looper = handlerThread.looper
+
 
         var road = roadManager.getRoad(geoPoints)
         var roadOverLay = RoadManager.buildRoadOverlay(road)
@@ -89,8 +110,11 @@ class TrackWriter() {
             tracksDir.mkdirs()
         }
         var localFile = File(tracksDir, "bike_ride_${getCurrentDateTime()}.kml")
+
+
         val locationListener = object : LocationListenerCompat {
             override fun onLocationChanged(location: Location) {
+                val writer = BufferedWriter(FileWriter(localFile))
                 // Handle location updates
                 Log.d("Track Writer", "Location changed: $location")
                 // You can update the UI or perform any action based on the new location
@@ -103,22 +127,37 @@ class TrackWriter() {
                 // Set the center of the map view to the new location
                 //adding a new geoPoint to the road overlay
                 var geoPoint = GeoPoint(location.latitude, location.longitude, location.altitude)
+
                 geoPoints.add(geoPoint)
+                kmlTrack.add(geoPoint, Date())
 
                 var marker = Marker(map)
                 marker.position = geoPoint
+
                 marker.setAnchor(Marker.ANCHOR_BOTTOM, Marker.ANCHOR_CENTER)
                 map.overlays.add(marker)
                 //removing the previous road overlay
                 map.overlays.remove(roadOverLay)
                 var road = roadManager.getRoad(geoPoints)
+
                 roadOverLay = RoadManager.buildRoadOverlay(road)
+
                 map.overlays.add(roadOverLay)
                 map.invalidate()
                 kmlDocument.mKmlRoot.addOverlay(roadOverLay, kmlDocument)
-                kmlDocument.saveAsKML(localFile)
+                writer.write("<?xml version='1.0' encoding='UTF-8'?>\n");
+                writer.write("<kml xmlns='http://www.opengis.net/kml/2.2' xmlns:gx='http://www.google.com/kml/ext/2.2'>\n");
+                writer.write("<Document>\n")
+                writer.write("<Placemark>\n")
 
+                //kmlDocument.saveAsKML(localFile)
 
+                kmlTrack.saveAsKML(writer)
+                writer.write("</Placemark>\n")
+                writer.write("</Document>\n")
+                writer.write("</kml>\n");
+                writer.flush()
+                writer.close()
             }
 
             override fun onProviderEnabled(provider: String) {
