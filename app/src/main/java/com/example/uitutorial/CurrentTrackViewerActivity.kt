@@ -1,14 +1,8 @@
 package com.example.uitutorial
 
-import android.util.Log
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
@@ -24,21 +18,21 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import org.osmdroid.bonuspack.kml.KmlDocument
-import org.osmdroid.views.MapView
-import org.osmdroid.views.overlay.FolderOverlay
-import java.io.File
+import androidx.navigation.NavHostController
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CurrentTrackViewerActivity(map: MapView) {
-
+fun CurrentTrackViewerActivity(navController: NavHostController, trackWriter: TrackWriter) {
+    val context = LocalContext.current
+    val currentSpeed = remember { trackWriter.getCurrentSpeed() }
 
     Scaffold(
         topBar = {
@@ -88,9 +82,12 @@ fun CurrentTrackViewerActivity(map: MapView) {
             modifier = Modifier
                 .padding(innerPadding)
                 .clip(shape = RoundedCornerShape(20.dp))
+
         ) {
             // Display a list of clickable items using LazyColumn
-            Text(fontSize =  30.sp,text = "Hello World", textAlign = TextAlign.Center, modifier = Modifier.width(512.dp).padding(16.dp))
+            Text(fontSize =  24.sp,text = "Current Speed: " + currentSpeed.toString(), textAlign = TextAlign.Center, modifier = Modifier.width(512.dp).padding(16.dp))
+            Text(fontSize =  24.sp,text = "Total Time moving: ", textAlign = TextAlign.Center, modifier = Modifier.width(512.dp).padding(16.dp))
+            Text(fontSize =  24.sp,text = "Total Time: ", textAlign = TextAlign.Center, modifier = Modifier.width(512.dp).padding(16.dp))
         }
     }
 }

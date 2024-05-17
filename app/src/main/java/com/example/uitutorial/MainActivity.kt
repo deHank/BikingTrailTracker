@@ -5,9 +5,6 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.graphics.Rect
 import android.location.Location
 import android.location.LocationManager
 import android.os.Bundle
@@ -16,12 +13,8 @@ import android.preference.PreferenceManager
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -37,23 +30,17 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LargeFloatingActionButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults.topAppBarColors
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.app.ActivityCompat
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -64,14 +51,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.osmdroid.config.Configuration.getInstance
-import org.osmdroid.tileprovider.tilesource.TileSourceFactory
-import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
-import org.osmdroid.views.overlay.compass.CompassOverlay
-import org.osmdroid.views.overlay.gestures.RotationGestureOverlay
-import org.osmdroid.views.overlay.gridlines.LatLonGridlineOverlay2
-import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
-import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
 import java.io.File
 
 
@@ -101,13 +81,13 @@ class MainActivity : ComponentActivity() {
        // locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,1000, .01f, locationListener)
 
 
-
-
+        map = MapView(this)
+        val trackWriter = TrackWriter(map)
         getInstance().load(this, PreferenceManager.getDefaultSharedPreferences(this))
 
 
 
-        map = MapView(this)
+
 
         //locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
 
@@ -136,14 +116,14 @@ class MainActivity : ComponentActivity() {
                 NavHost(navController, startDestination = "main") {
                     composable("main") {
                         // Your main screen content
-                        BottomAppBarExample(navController, map)
+                        BottomAppBarExample(navController, map, trackWriter)
                     }
                     composable("pastTracksViewer") {
                         // Content for the Past Tracks Viewer screen
-                        PastTracksViewerActivity(map)
+                        PastTracksViewerActivity(navController, map)
                     }
                     composable("CurrentTrackViewerActivity"){
-                        CurrentTrackViewerActivity(map = map)
+                        CurrentTrackViewerActivity(navController , trackWriter)
                     }
                 }
             }
@@ -247,7 +227,7 @@ fun onMapChanged(mapView: MapView) {
 @SuppressLint("MissingPermission")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BottomAppBarExample(navController: NavHostController, map1: MapView) {
+fun BottomAppBarExample(navController: NavHostController, map1: MapView, trackWriter: TrackWriter) {
 
     val context = LocalContext.current
     Scaffold(
@@ -311,10 +291,13 @@ fun BottomAppBarExample(navController: NavHostController, map1: MapView) {
                             }
 
                             val locationHandler = GPSHandler(context)
+                            map1.setDestroyMode(false)
                             CoroutineScope(Dispatchers.IO).launch {
 
-                                TrackWriter().GPSTrackWriter(map1)
+                                trackWriter.GPSTrackWriter(map1)
+                                //TrackWriter().GPSTrackWriter(map1)
                             }
+                            navController.navigate("CurrentTrackViewerActivity")
 
                         },
                         containerColor = BottomAppBarDefaults.bottomAppBarFabColor,

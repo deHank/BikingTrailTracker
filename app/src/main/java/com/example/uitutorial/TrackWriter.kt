@@ -8,9 +8,7 @@ import android.icu.text.SimpleDateFormat
 import android.location.Location
 import android.location.LocationManager
 import android.os.HandlerThread
-import android.text.format.Time
 import android.util.Log
-import androidx.core.content.ContextCompat
 import androidx.core.location.LocationListenerCompat
 import androidx.core.location.LocationManagerCompat
 import androidx.core.location.LocationRequestCompat
@@ -18,11 +16,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.osmdroid.bonuspack.kml.KmlDocument
-import org.osmdroid.bonuspack.kml.KmlFeature
-import org.osmdroid.bonuspack.kml.KmlFeature.Styler
 import org.osmdroid.bonuspack.kml.KmlPlacemark
 import org.osmdroid.bonuspack.kml.KmlTrack
-import org.osmdroid.bonuspack.kml.Style
 import org.osmdroid.bonuspack.routing.OSRMRoadManager
 import org.osmdroid.bonuspack.routing.RoadManager
 import org.osmdroid.util.GeoPoint
@@ -31,17 +26,13 @@ import org.osmdroid.views.overlay.Marker
 import org.osmdroid.views.overlay.Polyline
 import java.io.BufferedWriter
 import java.io.File
-import java.io.FileOutputStream
 import java.io.FileWriter
-import java.io.Writer
-import java.time.LocalDate
-import java.time.LocalTime
 import java.util.Date
 import java.util.Locale
 
 
-class TrackWriter() {
-
+class TrackWriter(map: MapView) {
+    var speed = 0.0f
     val locationListener = object : LocationListenerCompat {
         override fun onLocationChanged(location: Location) {
             // Handle location updates
@@ -66,6 +57,9 @@ class TrackWriter() {
         return dateFormat.format(currentDate)
     }
 
+    fun getCurrentSpeed(): Float {
+        return speed
+    }
 
     @SuppressLint("MissingPermission")
     fun startWritingTrack(map: MapView, locationHandler: GPSHandler) {
@@ -76,6 +70,7 @@ class TrackWriter() {
 
     @SuppressLint("MissingPermission")
     fun GPSTrackWriter(map: MapView) {
+        map.invalidate()
         val kmlDocument = KmlDocument()
         val kmlTrack = KmlTrack()
         val kmlPlaceMark = KmlPlacemark()
@@ -114,6 +109,7 @@ class TrackWriter() {
 
         val locationListener = object : LocationListenerCompat {
             override fun onLocationChanged(location: Location) {
+                speed = location.speed
                 val writer = BufferedWriter(FileWriter(localFile))
                 // Handle location updates
                 Log.d("Track Writer", "Location changed: $location")

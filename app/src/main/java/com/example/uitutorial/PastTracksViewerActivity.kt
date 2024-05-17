@@ -26,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavHostController
 import org.osmdroid.bonuspack.kml.KmlDocument
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.FolderOverlay
@@ -33,7 +34,7 @@ import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PastTracksViewerActivity(map: MapView) {
+fun PastTracksViewerActivity(navController: NavHostController, map: MapView) {
 
     val context = LocalContext.current
     Scaffold(
