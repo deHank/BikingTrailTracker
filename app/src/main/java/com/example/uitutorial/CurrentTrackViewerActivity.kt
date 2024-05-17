@@ -18,6 +18,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -27,12 +28,25 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
+import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CurrentTrackViewerActivity(navController: NavHostController, trackWriter: TrackWriter) {
     val context = LocalContext.current
-    val currentSpeed = remember { trackWriter.getCurrentSpeed() }
+    // State to hold the current speed
+    val currentSpeedState = remember { mutableStateOf(trackWriter.getCurrentSpeed()) }
+
+
+    // Coroutine to periodically update the current speed
+    LaunchedEffect(Unit) {
+        while (true) {
+            // Update the current speed state
+            currentSpeedState.value = trackWriter.getCurrentSpeed()
+            // Delay for a specified interval before updating again
+            delay(1000) // Adjust the delay interval as needed
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -85,7 +99,7 @@ fun CurrentTrackViewerActivity(navController: NavHostController, trackWriter: Tr
 
         ) {
             // Display a list of clickable items using LazyColumn
-            Text(fontSize =  24.sp,text = "Current Speed: " + currentSpeed.toString(), textAlign = TextAlign.Center, modifier = Modifier.width(512.dp).padding(16.dp))
+            Text(fontSize = 24.sp, text = "Current Speed: %.2f MPH".format(currentSpeedState.value), textAlign = TextAlign.Center, modifier = Modifier.width(512.dp).padding(16.dp))
             Text(fontSize =  24.sp,text = "Total Time moving: ", textAlign = TextAlign.Center, modifier = Modifier.width(512.dp).padding(16.dp))
             Text(fontSize =  24.sp,text = "Total Time: ", textAlign = TextAlign.Center, modifier = Modifier.width(512.dp).padding(16.dp))
         }
