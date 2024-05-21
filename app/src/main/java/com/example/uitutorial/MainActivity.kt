@@ -46,6 +46,11 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.work.Constraints
+import androidx.work.Data
+import androidx.work.NetworkType
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
 import com.example.uitutorial.ui.theme.UITutorialTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -227,7 +232,7 @@ fun onMapChanged(mapView: MapView) {
 @SuppressLint("MissingPermission")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BottomAppBarExample(navController: NavHostController, map1: MapView, trackWriter: TrackWriter) {
+fun BottomAppBarExample(navController: NavHostController, map: MapView, trackWriter: TrackWriter) {
 
     val context = LocalContext.current
     Scaffold(
@@ -249,17 +254,17 @@ fun BottomAppBarExample(navController: NavHostController, map1: MapView, trackWr
                     .clip(shape = RoundedCornerShape(20.dp)),
                 actions = {
                     IconButton(onClick = {
-                        map1.setDestroyMode(false)
+                        map.setDestroyMode(false)
 
                         navController.navigate("pastTracksViewer")
-                        map1.invalidate()
+                        map.invalidate()
                         }) {
                         Icon(Icons.Filled.List, contentDescription = "view past tracks")
                     }
-                    IconButton(onClick = { map1.setDestroyMode(false)
+                    IconButton(onClick = { map.setDestroyMode(false)
 
                         navController.navigate("CurrentTrackViewerActivity")
-                        map1.invalidate() }) {
+                        map.invalidate() }) {
 
                         Icon(
                             Icons.Filled.Edit,
@@ -283,20 +288,25 @@ fun BottomAppBarExample(navController: NavHostController, map1: MapView, trackWr
                     FloatingActionButton(
                         onClick = {
                             Log.d("Floating red Action Button" , "Button was pressed")
-                            for(overlay in map1.overlays){
+                            for(overlay in map.overlays){
 
                                 if(!overlay.toString().contains("MyLocation")){
-                                    map1.overlays.remove(overlay)
+                                    map.overlays.remove(overlay)
                                 }
                             }
+                            map.setDestroyMode(false)
+                            val constraints = Constraints.Builder()
+                                .setRequiredNetworkType(NetworkType.CONNECTED)
+                                .build()
 
-                            val locationHandler = GPSHandler(context)
-                            map1.setDestroyMode(false)
-                            CoroutineScope(Dispatchers.IO).launch {
+                            val trackWriterWorker = OneTimeWorkRequestBuilder<TrackWriterWorker>()
+                                .setConstraints(constraints)
+                                .setInputData(Data.Builder().putString("mapViewKey", map.toString()).build()) // Pass the MapView instance here
+                                .build()
 
-                                trackWriter.GPSTrackWriter(map1)
-                                //TrackWriter().GPSTrackWriter(map1)
-                            }
+                            WorkManager.getInstance(context).enqueue(trackWriterWorker)
+
+
                             navController.navigate("CurrentTrackViewerActivity")
 
                         },
@@ -323,7 +333,7 @@ fun BottomAppBarExample(navController: NavHostController, map1: MapView, trackWr
             ) {
 
 
-            MapHomeView(map1)
+            MapHomeView(map)
 
         }
 
