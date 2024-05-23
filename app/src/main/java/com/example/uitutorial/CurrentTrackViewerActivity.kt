@@ -42,9 +42,13 @@ fun CurrentTrackViewerActivity(navController: NavHostController, trackWriter: Tr
     LaunchedEffect(Unit) {
         while (true) {
             // Update the current speed state
-            currentSpeedState.value = trackWriter.getCurrentSpeed()
-            // Delay for a specified interval before updating again
-            delay(1000) // Adjust the delay interval as needed
+
+            trackWriter.latestNews.collect { currLocation ->
+                // Update View with the latest favorite news
+                currentSpeedState.value = currLocation.speed
+            }
+
+
         }
     }
 

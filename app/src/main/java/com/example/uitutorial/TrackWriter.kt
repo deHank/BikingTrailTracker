@@ -14,6 +14,9 @@ import androidx.core.location.LocationManagerCompat
 import androidx.core.location.LocationRequestCompat
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import org.osmdroid.bonuspack.kml.KmlDocument
 import org.osmdroid.bonuspack.kml.KmlPlacemark
@@ -32,6 +35,19 @@ import java.util.Locale
 
 
 class TrackWriter(map: MapView) {
+    private val refreshIntervalMs: Long = 3000
+    private lateinit var currLocation: Location
+
+    val latestNews: Flow<Location> = flow {
+        while(true) {
+            val latestNews = GPSTrackWriter(map)
+            emit(currLocation) // Emits the result of the request to the flow
+            delay(refreshIntervalMs) // Suspends the coroutine for some time
+        }
+    }
+
+
+
     var speed = 0.0f
     val locationListener = object : LocationListenerCompat {
         override fun onLocationChanged(location: Location) {
@@ -123,7 +139,7 @@ class TrackWriter(map: MapView) {
                 // Set the center of the map view to the new location
                 //adding a new geoPoint to the road overlay
                 var geoPoint = GeoPoint(location.latitude, location.longitude, location.altitude)
-
+                currLocation = location
                 geoPoints.add(geoPoint)
                 kmlTrack.add(geoPoint, Date())
 
