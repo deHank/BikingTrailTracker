@@ -38,7 +38,7 @@ import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
 
 @Composable
-fun MapHomeView(map: MapView) {
+fun MapHomeView(map: MapView?) {
     var selectedItem by remember { mutableStateOf(0) }
     Box(modifier = Modifier.fillMaxSize()) {
 
@@ -50,24 +50,24 @@ fun MapHomeView(map: MapView) {
 
                 map.apply {
 
-                    if(map.overlays.isEmpty()) {
+                    if(map?.overlays!!.isEmpty()) {
                         val overlay = LatLonGridlineOverlay2();
                         val rotationGestureOverlay = RotationGestureOverlay(this)
                         rotationGestureOverlay.isEnabled
 
-                        this.setMultiTouchControls(true)
-                        this.overlays.add(rotationGestureOverlay)
+                        this?.setMultiTouchControls(true)
+                        this?.overlays?.add(rotationGestureOverlay)
 
-                        val compassOverlay = CompassOverlay(this.context, this)
+                        val compassOverlay = CompassOverlay(this?.context, this)
                         compassOverlay.enableCompass()
                         compassOverlay.isPointerMode = true
-                        this.overlays.add(compassOverlay)
+                        this?.overlays?.add(compassOverlay)
 
-                        this.controller.zoomTo(18)
+                        this?.controller?.zoomTo(18)
 
 
 
-                        setTileSource(TileSourceFactory.MAPNIK)
+                        this!!.setTileSource(TileSourceFactory.MAPNIK)
 
                         var locationHandler = GPSHandler(this.context)
 
@@ -113,7 +113,7 @@ fun MapHomeView(map: MapView) {
                     }
 
                     //maxZoomLevel = 2.0
-                }
+                }!!
 
 
             },
@@ -123,10 +123,10 @@ fun MapHomeView(map: MapView) {
 
         // Compose button overlaid on top of the custom view
         LargeFloatingActionButton(
-            onClick = { map.controller.zoomTo(18)
+            onClick = { map?.controller?.zoomTo(18)
                 var locationOverlay: MyLocationNewOverlay
                 locationOverlay = MyLocationNewOverlay(map)
-                for(overlay in map.overlays){
+                for(overlay in map?.overlays!!){
 
                     if(overlay.toString().contains("MyLocation")){
                         locationOverlay = overlay as MyLocationNewOverlay

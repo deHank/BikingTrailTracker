@@ -34,7 +34,7 @@ import java.util.Date
 import java.util.Locale
 
 
-class TrackWriter(map: MapView) {
+class TrackWriter(map: MapView?) {
     private val refreshIntervalMs: Long = 3000
     private lateinit var currLocation: Location
 
@@ -85,8 +85,8 @@ class TrackWriter(map: MapView) {
     }
 
     @SuppressLint("MissingPermission")
-    fun GPSTrackWriter(map: MapView) {
-        map.invalidate()
+    fun GPSTrackWriter(map: MapView?) {
+        map?.invalidate()
         val kmlDocument = KmlDocument()
         val kmlTrack = KmlTrack()
         val kmlPlaceMark = KmlPlacemark()
@@ -98,7 +98,7 @@ class TrackWriter(map: MapView) {
 
 
 
-        val roadManager = OSRMRoadManager(map.context, "test")
+        val roadManager = OSRMRoadManager(map?.context, "test")
         roadManager.setMean(OSRMRoadManager.MEAN_BY_BIKE)
         val geoPoints = ArrayList<GeoPoint>(0)
         val handlerThread = HandlerThread("HandlerThread")
@@ -108,15 +108,15 @@ class TrackWriter(map: MapView) {
 
         var road = roadManager.getRoad(geoPoints)
         var roadOverLay = RoadManager.buildRoadOverlay(road)
-        map.overlays.add(roadOverLay)
-        map.invalidate()
+        map?.overlays?.add(roadOverLay)
+        map?.invalidate()
         val locationManager =
-            map.context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+            (map?.context?.getSystemService(Context.LOCATION_SERVICE) ) as LocationManager
         val locationRequest = LocationRequestCompat.Builder(1000)
             .setQuality(LocationRequestCompat.QUALITY_HIGH_ACCURACY).setMinUpdateIntervalMillis(100)
             .setMinUpdateDistanceMeters(10.0f).build()
         Log.d("Looper", "before starting created")
-        val tracksDir = File(map.context.filesDir, "tracks")
+        val tracksDir = File(map?.context?.filesDir, "tracks")
         if (!tracksDir.exists()) {
             tracksDir.mkdirs()
         }
@@ -147,15 +147,15 @@ class TrackWriter(map: MapView) {
                 marker.position = geoPoint
 
                 marker.setAnchor(Marker.ANCHOR_BOTTOM, Marker.ANCHOR_CENTER)
-                map.overlays.add(marker)
+                map?.overlays?.add(marker)
                 //removing the previous road overlay
-                map.overlays.remove(roadOverLay)
+                map?.overlays?.remove(roadOverLay)
                 var road = roadManager.getRoad(geoPoints)
 
                 roadOverLay = RoadManager.buildRoadOverlay(road)
 
-                map.overlays.add(roadOverLay)
-                map.invalidate()
+                map?.overlays?.add(roadOverLay)
+                map?.invalidate()
                 kmlDocument.mKmlRoot.addOverlay(roadOverLay, kmlDocument)
                 writer.write("<?xml version='1.0' encoding='UTF-8'?>\n");
                 writer.write("<kml xmlns='http://www.opengis.net/kml/2.2' xmlns:gx='http://www.google.com/kml/ext/2.2'>\n");

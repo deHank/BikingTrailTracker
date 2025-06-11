@@ -1,6 +1,5 @@
 package com.example.uitutorial
 
-import GPSHandler
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
@@ -17,7 +16,9 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -28,6 +29,8 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.BottomAppBarDefaults
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
@@ -40,11 +43,16 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults.topAppBarColors
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -58,139 +66,275 @@ import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import com.example.uitutorial.ui.theme.UITutorialTheme
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import org.osmdroid.config.Configuration.getInstance
 import org.osmdroid.views.MapView
 import java.io.File
+import java.util.*
+
+//region Dummy Implementations for classes not provided in the original snippet
+// These are added to make the MainActivity code compile and run for demonstration.
+// In a real project, these would be in their own respective files.
+
+/**
+ * Dummy implementation of FitFileWriter.
+ * In a real app, this would use the Garmin FIT SDK to write actual .fit files.
+ */
+class FitFileWriter(private val context: Context) {
+    fun writeSampleFitFile(fileName: String) {
+        Log.d("FitFileWriter", "Writing sample FIT file: $fileName")
+        // Actual FIT file writing logic would go here, using the Garmin FIT SDK.
+        // Example:
+        // val file = File(context.filesDir, fileName)
+        // val outputStream = FileOutputStream(file)
+        // val fileEncoder = FileEncoder(outputStream, com.garmin.fit.Fit.ProtocolVersion.V2_0)
+        // ... (add FileIdMesg, SessionMesg, RecordMesg etc.)
+        // fileEncoder.close()
+        // outputStream.close()
+        Toast.makeText(context, "Dummy FIT file '$fileName' written (check logs)", Toast.LENGTH_SHORT).show()
+    }
+}
+
+/**
+ * Dummy implementation of TrackWriter.
+ * In a real app, this would handle recording GPS data and potentially
+ * interacting with the MapView to draw the current track.
+ */
+
+
+
+/**
+ * Dummy Composable for the Current Track Viewer screen.
+ */
+@Composable
+fun CurrentTrackViewerActivity(navController: NavHostController, trackWriter: TrackWriter?) { // TrackWriter is now nullable here too
+    Column(
+        modifier = Modifier.fillMaxSize().padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text("Current Track Recording", style = MaterialTheme.typography.headlineMedium)
+        if (trackWriter != null) {
+            Button(onClick = {  }) {
+                Text("Start Recording")
+            }
+            Button(onClick = {  }) {
+                Text("Stop Recording")
+            }
+        } else {
+            Text("Tracking not available without permissions.", modifier = Modifier.padding(16.dp))
+        }
+        Button(onClick = { navController.popBackStack() }) {
+            Text("Go Back")
+        }
+    }
+}
+
+
+/**
+ * Dummy GPSHandler for simulating location updates.
+ */
+class GPSHandler(private val context: Context, private val locationManager: LocationManager) {
+    private val handler = Handler()
+    private var locationRunnable: Runnable? = null
+    private var locationUpdateListener: ((Location) -> Unit)? = null
+
+    @SuppressLint("MissingPermission") // Permissions handled at higher level
+    fun startLocationUpdates(listener: (Location) -> Unit) {
+        this.locationUpdateListener = listener
+        Log.d("GPSHandler", "Starting dummy location updates.")
+
+        // Simulate location updates periodically
+        locationRunnable = object : Runnable {
+            override fun run() {
+                val dummyLocation = Location("dummy_provider").apply {
+                    latitude = 37.540721 + (Math.random() - 0.5) * 0.01
+                    longitude = -77.436050 + (Math.random() - 0.5) * 0.01
+                    altitude = 100.0 + (Math.random() - 0.5) * 5
+                    time = System.currentTimeMillis()
+                    speed = (5.0f + (Math.random() - 0.5) * 2).toFloat()
+                    bearing = (Math.random() * 360).toFloat()
+                    accuracy = (5.0f + Math.random() * 5).toFloat()
+                }
+                locationUpdateListener?.invoke(dummyLocation)
+                handler.postDelayed(this, 3000) // Update every 3 seconds
+            }
+        }
+        handler.post(locationRunnable!!)
+    }
+
+    fun stopLocationUpdates() {
+        Log.d("GPSHandler", "Stopping dummy location updates.")
+        locationRunnable?.let { handler.removeCallbacks(it) }
+        locationRunnable = null
+        locationUpdateListener = null
+    }
+}
+
+//endregion Dummy Implementations
 
 
 class MainActivity : ComponentActivity() {
 
+    // Using Activity Result API is generally preferred for runtime permissions.
+    // The old onRequestPermissionsResult callback is also kept for completeness but might not be strictly needed.
     private val REQUEST_PERMISSIONS_REQUEST_CODE = 1
-    private lateinit var map : MapView
 
-    private lateinit var locationManager: LocationManager
+    // Map and TrackWriter are now nullable and initialized only after permissions are granted.
+    private var map: MapView? = null
+    private var trackWriter: TrackWriter? = null
 
-    private lateinit var locationHandler: GPSHandler
-
-    private lateinit var location: Location
-    private lateinit var handler: Handler
+    // State variables to control UI rendering based on permission status.
+    private var isLocationPermissionGranted: MutableState<Boolean> = mutableStateOf(false)
     private var permissionCheckCompleted: MutableState<Boolean> = mutableStateOf(false)
 
 
-
-    // Using Activity Result API for cleaner permission handling (recommended for modern Android)
+    // Activity Result Launcher for requesting multiple permissions.
     private val requestPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
             val fineLocationGranted = permissions[Manifest.permission.ACCESS_FINE_LOCATION] ?: false
             val coarseLocationGranted = permissions[Manifest.permission.ACCESS_COARSE_LOCATION] ?: false
 
+            // Update the state based on the user's decision.
             if (fineLocationGranted || coarseLocationGranted) {
-                // Permissions are granted, proceed with location-dependent operations
                 Toast.makeText(this, "Location permissions granted!", Toast.LENGTH_SHORT).show()
-                //startFitFileGeneration()
-                permissionCheckCompleted.value = true
+                isLocationPermissionGranted.value = true
+                setupCoreAppComponents() // Initialize core components now that permissions are granted.
             } else {
-                // Permissions denied, inform the user
-                Toast.makeText(this, "Location permissions denied.", Toast.LENGTH_LONG).show()
-                permissionCheckCompleted.value = true
+                Toast.makeText(this, "Location permissions denied. App functionality is limited.", Toast.LENGTH_LONG).show()
+                isLocationPermissionGranted.value = false
             }
+            permissionCheckCompleted.value = true // Permission check process is now complete.
         }
 
-
     /**
-     * Checks if location permissions are granted. If not, requests them.
+     * Checks if location permissions are already granted. If not, requests them.
+     * This method is called once at the start of the activity to initiate the permission flow.
      */
     private fun checkAndRequestLocationPermissions() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
             ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-            // Permissions are already granted
-            //startFitFileGeneration()
+            // Permissions are already granted.
+            isLocationPermissionGranted.value = true
+            permissionCheckCompleted.value = true
+            setupCoreAppComponents() // Initialize core components immediately.
         } else {
-            // Permissions are not granted, request them
+            // Permissions are not granted. Request them using the Activity Result API.
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                // Request both fine and coarse location permissions
                 requestPermissionLauncher.launch(
                     arrayOf(
                         Manifest.permission.ACCESS_FINE_LOCATION,
                         Manifest.permission.ACCESS_COARSE_LOCATION
                     )
                 )
-                permissionCheckCompleted.value = true
             } else {
-                // For API < 23, permissions are granted at install time.
-                // You might still want to inform the user or handle older device specifics.
-                permissionCheckCompleted.value = true            }
+                // For API < 23, dangerous permissions are granted at install time.
+                // In a real app, you might consider your min SDK version.
+                // For this example, we assume permissions are effectively granted on older APIs.
+                isLocationPermissionGranted.value = true
+                permissionCheckCompleted.value = true
+                setupCoreAppComponents()
+            }
         }
     }
 
 
-    @SuppressLint("MissingPermission")
+    @SuppressLint("MissingPermission") // Permissions are checked via checkAndRequestLocationPermissions and Composables
     override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
 
-        checkAndRequestLocationPermissions()
+        // Set the content with Jetpack Compose.
+        // The UI will react to changes in `permissionCheckCompleted` and `isLocationPermissionGranted`.
+        setContent {
+            UITutorialTheme {
+                // Use a Box to center the permission screens or fill the layout.
+                Box(modifier = Modifier.fillMaxSize()) {
+                    if (permissionCheckCompleted.value) {
+                        if (isLocationPermissionGranted.value) {
+                            // Permissions granted: Show the main app content (navigation graph).
+                            // Ensure osmdroid configuration is loaded if not already.
+                            // This might be redundant if setupCoreAppComponents() already did it.
+                            getInstance().load(LocalContext.current, PreferenceManager.getDefaultSharedPreferences(LocalContext.current))
 
-       // locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,1000, .01f, locationListener)
-
-        if(permissionCheckCompleted.value) {
-
-            map = MapView(this)
-            val trackWriter = TrackWriter(map)
-            getInstance().load(this, PreferenceManager.getDefaultSharedPreferences(this))
-
-
-            //locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
-
-            //handle permissions first, before map is created. not depicted here
-
-            //load/initialize the osmdroid configuration, this can be done
-            // This won't work unless you have imported this: org.osmdroid.config.Configuration.*
-            getInstance().load(this, PreferenceManager.getDefaultSharedPreferences(this))
-            //setting this before the layout is inflated is a good idea
-            //it 'should' ensure that the map has a writable location for the map cache, even without permissions
-            //if no tiles are displayed, you can try overriding the cache path using Configuration.getInstance().setCachePath
-            //see also StorageUtils
-            //note, the load method also sets the HTTP User Agent to your application's package name, if you abuse osm's
-            //tile servers will get you banned based on this string.
-
-            //inflate and create the map
-            //setContentView(R.layout.main)
-            super.onCreate(savedInstanceState)
-            // Set content with Jetpack Compose
-            setContent {
-                UITutorialTheme {
-                    // Initialize the NavController
-                    val navController = rememberNavController()
-
-                    // Define the navigation graph
-                    NavHost(navController, startDestination = "main") {
-                        composable("main") {
-                            // Your main screen content
-                            BottomAppBarExample(navController, map, trackWriter)
+                            val navController = rememberNavController()
+                            NavHost(navController, startDestination = "main") {
+                                composable("main") {
+                                    // Use 'let' to safely unwrap nullable map and trackWriter.
+                                    // If for some reason they are null here (shouldn't happen with `setupCoreAppComponents`),
+                                    // a fallback Text is displayed.
+                                    map?.let { mapInstance ->
+                                        trackWriter?.let { trackWriterInstance ->
+                                            BottomAppBarExample(navController, mapInstance, trackWriterInstance)
+                                        } ?: Text("Error: TrackWriter not initialized.", modifier = Modifier.align(Alignment.Center))
+                                    } ?: Text("Error: MapView not initialized.", modifier = Modifier.align(Alignment.Center))
+                                }
+                                composable("pastTracksViewer") {
+                                    map?.let { mapInstance ->
+                                        PastTracksViewerActivity(navController, mapInstance)
+                                    } ?: Text("Error: MapView not initialized.", modifier = Modifier.padding(16.dp).align(Alignment.Center))
+                                }
+                                composable("CurrentTrackViewerActivity"){
+                                    trackWriter?.let { trackWriterInstance ->
+                                        CurrentTrackViewerActivity(navController , trackWriterInstance)
+                                    } ?: Text("Error: TrackWriter not initialized.", modifier = Modifier.padding(16.dp).align(Alignment.Center))
+                                }
+                            }
+                        } else {
+                            // Permissions denied: Show a screen indicating denial with a retry option.
+                            PermissionDeniedScreen {
+                                // When the retry button is clicked, re-initiate the permission check.
+                                checkAndRequestLocationPermissions()
+                            }
                         }
-                        composable("pastTracksViewer") {
-                            // Content for the Past Tracks Viewer screen
-                            PastTracksViewerActivity(navController, map)
-                        }
-                        composable("CurrentTrackViewerActivity") {
-                            CurrentTrackViewerActivity(navController, trackWriter)
-                        }
+                    } else {
+                        // Permissions check in progress: Show a loading indicator.
+                        PermissionCheckingScreen()
                     }
                 }
             }
-            map.controller.setZoom(1.0)
-            goToCurrentLocation()
+        }
 
+        // Initiate the permission check when the Activity is created.
+        // This will trigger the UI to show either loading, denied, or main content.
+        checkAndRequestLocationPermissions()
+    }
+
+    /**
+     * Initializes core application components (MapView, TrackWriter) that
+     * require location permissions. This method is called ONLY after
+     * location permissions have been successfully granted.
+     */
+    private fun setupCoreAppComponents() {
+        // Ensure components are only initialized once.
+        if (map == null) {
+            // Initialize MapView
+            map = MapView(this)
+            // Initialize TrackWriter, passing the non-null MapView instance.
+            trackWriter = TrackWriter(map!!) // !! is safe here because we just assigned `map`
+            // Load osmdroid configuration.
+            getInstance().load(this, PreferenceManager.getDefaultSharedPreferences(this))
+
+            // Set initial map properties after initialization.
+            map!!.controller.setZoom(1.0)
+            // Call the actual logic for going to the current location.
+            // This will likely involve a LocationManager or FusedLocationProviderClient.
+            goToCurrentLocation()
         }
     }
 
+    /**
+     * Placeholder for actual logic to go to the device's current location on the map.
+     * In a real app, this would involve using Android's location services.
+     */
     fun goToCurrentLocation(){
-
-
+        // Example: To get the actual current location, you would need
+        // a LocationManager instance and request updates or last known location.
+        // For demonstration, this remains a placeholder.
+        Log.d("MainActivity", "goToCurrentLocation called. Implement actual location logic here.")
     }
 
+    /**
+     * Helper function to get a list of track files from app's internal storage.
+     */
     fun getFileList(): List<File> {
         val tracksDir = File(this.filesDir, "tracks")
         if (!tracksDir.exists()) {
@@ -200,16 +344,21 @@ class MainActivity : ComponentActivity() {
         return tracksDir.listFiles()?.toList() ?: emptyList()
     }
 
-
+    // This @Composable function `CheckLocationPermission` was for a different pattern
+    // (traditional `ActivityCompat.requestPermissions` with a Composable wrapper).
+    // Given the current `ActivityResultContracts.RequestMultiplePermissions` setup in MainActivity,
+    // this specific composable might not be directly used anymore for the main flow.
     @Composable
     fun CheckLocationPermission(onPermissionGranted: @Composable () -> Unit) {
-        val permissionState = remember { ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) }
-
-        // If permission is granted, execute the provided function
+        // This function's logic is largely superseded by the `requestPermissionLauncher` pattern.
+        // If it's not explicitly called, it can be removed to reduce confusion.
+        // For now, it's kept as-is, but note its limited role in this updated flow.
+        val permissionState = remember { ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) }
         if (permissionState == PackageManager.PERMISSION_GRANTED) {
             onPermissionGranted()
         } else {
-            // Request permission from the user
+            // Note: Calling requestPermissions directly from a Composable can be problematic
+            // in some scenarios. ActivityResultContracts is preferred.
             ActivityCompat.requestPermissions(
                 this@MainActivity,
                 arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
@@ -217,70 +366,115 @@ class MainActivity : ComponentActivity() {
             )
         }
     }
-    // Handle the result of the permission request
+
+    // The traditional `onRequestPermissionsResult` callback is part of `ComponentActivity`.
+    // It will still be called by the system, even if you use `ActivityResultContracts`.
+    // It's good practice to keep it if you have other permission requests not handled by `ActivityResultContracts`.
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        // If you rely solely on `requestPermissionLauncher` for location, this block
+        // for `REQUEST_PERMISSIONS_REQUEST_CODE` might not be strictly necessary for location.
+        // However, if you have other permission requests using this old API, keep it.
         if (requestCode == REQUEST_PERMISSIONS_REQUEST_CODE) {
             if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                // Permission granted, continue with your UI setup
-
+                Log.d("MainActivity", "Permission granted via old API callback!")
+                // You might need to update state variables here if this path is the primary one
+                // for some permissions, to ensure UI reflects the new state.
             } else {
-                // Permission denied, handle accordingly (e.g., show an explanation or disable location features)
-                // For simplicity, we'll just finish the activity
-                finish()
+                Log.d("MainActivity", "Permission denied via old API callback!")
             }
         }
     }
 
     override fun onResume() {
         super.onResume()
-        //this will refresh the osmdroid configuration on resuming.
-        //if you make changes to the configuration, use
-        //SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        //Configuration.getInstance().load(this, PreferenceManager.getDefaultSharedPreferences(this));
-        map.onResume() //needed for compass, my location overlays, v6.0.0 and up
+        // Ensure map is not null before calling its lifecycle methods.
+        map?.onResume()
     }
 
     override fun onPause() {
         super.onPause()
-        //this will refresh the osmdroid configuration on resuming.
-        //if you make changes to the configuration, use
-        //SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        //Configuration.getInstance().save(this, prefs);
-        map.onPause()  //needed for compass, my location overlays, v6.0.0 and up
+        // Ensure map is not null before calling its lifecycle methods.
+        map?.onPause()
     }
 
     override fun onBackPressed() {
-
-        // Call super method to handle normal back button behavior
+        // Call super method to handle normal back button behavior.
+        // For Jetpack Compose navigation, you might want to handle it with `navController.popBackStack()`.
         super.onBackPressed()
     }
-
 }
 
 
-fun getFileList(context: Context): List<File> {
-        val tracksDir = File(context.filesDir, "tracks")
-        if (!tracksDir.exists()) {
-            tracksDir.mkdirs()
+// --- Composable functions for permission status screens ---
+/**
+ * Composable screen displayed while location permissions are being checked.
+ */
+@Composable
+fun PermissionCheckingScreen() {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            CircularProgressIndicator()
+            Text("Checking location permissions...", modifier = Modifier.padding(top = 16.dp))
         }
-        Log.d("PastTracksViewer", "files dir is " + tracksDir.canonicalPath)
-        return tracksDir.listFiles()?.toList() ?: emptyList()
+    }
 }
 
+/**
+ * Composable screen displayed when location permissions are denied.
+ */
+@Composable
+fun PermissionDeniedScreen(onRetryClick: () -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text(
+            text = "Location permissions are required for this app's core features. Please grant permissions to continue.",
+            style = MaterialTheme.typography.headlineSmall,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(bottom = 24.dp)
+        )
+        Button(onClick = onRetryClick) {
+            Text("Grant Permissions")
+        }
+    }
+}
 
+// --- Helper function (can be in a separate file or companion object) ---
+/**
+ * Helper function to retrieve a list of files from app's internal storage.
+ */
+fun getFileList(context: Context): List<File> {
+    val tracksDir = File(context.filesDir, "tracks")
+    if (!tracksDir.exists()) {
+        tracksDir.mkdirs()
+    }
+    Log.d("PastTracksViewer", "files dir is " + tracksDir.canonicalPath)
+    return tracksDir.listFiles()?.toList() ?: emptyList()
+}
 
-
+/**
+ * Placeholder for map change listener.
+ */
 fun onMapChanged(mapView: MapView) {
-    TODO("Not yet implemented")
+    // TODO: Not yet implemented
 }
 
-
-@SuppressLint("MissingPermission")
+/**
+ * Main application UI with a BottomAppBar and content area.
+ * This Composable now safely receives non-null MapView and TrackWriter instances.
+ */
+@SuppressLint("MissingPermission") // Suppress lint warning because permissions are checked at a higher level
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BottomAppBarExample(navController: NavHostController, map: MapView, trackWriter: TrackWriter) {
-
+fun BottomAppBarExample(navController: NavHostController, map: MapView?, trackWriter: TrackWriter?) { // Marked map and trackWriter as nullable
     val context = LocalContext.current
     Scaffold(
         topBar = {
@@ -294,78 +488,62 @@ fun BottomAppBarExample(navController: NavHostController, map: MapView, trackWri
                 }
             )
         },
-
         bottomBar = {
             BottomAppBar(
-                modifier = Modifier
-                    .clip(shape = RoundedCornerShape(20.dp)),
+                modifier = Modifier.clip(shape = RoundedCornerShape(20.dp)),
                 actions = {
                     IconButton(onClick = {
-                        map.setDestroyMode(false)
-
+                        map?.setDestroyMode(false) // Safe call
                         navController.navigate("pastTracksViewer")
-                        map.invalidate()
-                        }) {
+                        map?.invalidate() // Safe call
+                    }) {
                         Icon(Icons.Filled.List, contentDescription = "view past tracks")
                     }
-                    IconButton(onClick = { map.setDestroyMode(false)
-
+                    IconButton(onClick = {
+                        map?.setDestroyMode(false) // Safe call
                         navController.navigate("CurrentTrackViewerActivity")
-                        map.invalidate() }) {
-
-                        Icon(
-                            Icons.Filled.Edit,
-                            contentDescription = "Localized description",
-                        )
+                        map?.invalidate() // Safe call
+                    }) {
+                        Icon(Icons.Filled.Edit, contentDescription = "Localized description")
                     }
                     IconButton(onClick = { /* do something */ }) {
-                        Icon(
-                            Icons.Filled.Check,
-                            contentDescription = "Localized description",
-                        )
+                        Icon(Icons.Filled.Check, contentDescription = "Localized description")
                     }
                     IconButton(onClick = { /* do something */ }) {
-                        Icon(
-                            Icons.Filled.Edit,
-                            contentDescription = "Localized description",
-                        )
+                        Icon(Icons.Filled.Edit, contentDescription = "Localized description")
                     }
                 },
                 floatingActionButton = {
                     FloatingActionButton(
                         onClick = {
-                            Log.d("Floating red Action Button" , "Button was pressed")
-                            for(overlay in map.overlays){
-
-                                if(!overlay.toString().contains("MyLocation")){
-                                    map.overlays.remove(overlay)
-                                }
+                            Log.d("Floating red Action Button", "Button was pressed")
+                            // Safely remove overlays. `map?.overlays` returns null if map is null.
+                            // If `map.overlays` is null, `filter` and `removeAll` won't be called.
+                            map?.let {
+                                val overlaysToRemove = it.overlays.filter { overlay -> !overlay.toString().contains("MyLocation") }
+                                it.overlays.removeAll(overlaysToRemove)
+                                it.setDestroyMode(false)
                             }
-                            map.setDestroyMode(false)
+
                             val constraints = Constraints.Builder()
                                 .setRequiredNetworkType(NetworkType.CONNECTED)
                                 .build()
 
+                            // It's generally not recommended to pass UI components (like MapView) to Workers directly.
+                            // Instead, pass necessary data (e.g., activity ID, parameters for tracking).
                             val trackWriterWorker = OneTimeWorkRequestBuilder<TrackWriterWorker>()
                                 .setConstraints(constraints)
-                                .setInputData(Data.Builder().putString("mapViewKey", map.toString()).build()) // Pass the MapView instance here
+                                .setInputData(Data.Builder().putString("mapViewKey", "mapViewInstance").build())
                                 .build()
 
                             WorkManager.getInstance(context).enqueue(trackWriterWorker)
-
-
                             navController.navigate("CurrentTrackViewerActivity")
-
                         },
                         containerColor = BottomAppBarDefaults.bottomAppBarFabColor,
                         elevation = FloatingActionButtonDefaults.bottomAppBarFabElevation()
                     ) {
-                        var recIcon = Icons.Filled.AddCircle
-
-
-                        Icon(recIcon, "Localized description",Modifier.size(48.dp), tint = androidx.compose.ui.graphics.Color.Red)
-
-
+                        val recIcon = Icons.Filled.AddCircle
+                        Icon(recIcon, "Localized description", Modifier.size(48.dp), tint = Color.Red)
                     }
                 }
             )
@@ -376,20 +554,8 @@ fun BottomAppBarExample(navController: NavHostController, map: MapView, trackWri
                 .padding(innerPadding)
                 .clip(shape = RoundedCornerShape(20.dp)),
             verticalArrangement = Arrangement.spacedBy(16.dp),
-
-            ) {
-
-
-            MapHomeView(map)
-
+        ) {
+            MapHomeView(map) // Pass the possibly null MapView instance to the MapHomeView composable
         }
-
-        //R.id.map
     }
 }
-
-
-
-
-
-

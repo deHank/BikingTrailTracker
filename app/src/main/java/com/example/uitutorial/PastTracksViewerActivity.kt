@@ -34,7 +34,7 @@ import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PastTracksViewerActivity(navController: NavHostController, map: MapView) {
+fun PastTracksViewerActivity(navController: NavHostController, map: MapView?) {
 
     val context = LocalContext.current
     Scaffold(
@@ -97,10 +97,10 @@ fun PastTracksViewerActivity(navController: NavHostController, map: MapView) {
                         var kmlDocument = KmlDocument()
                         kmlDocument.parseKMLFile(file)
                         val kmlOverlay = kmlDocument.mKmlRoot.buildOverlay(map, null, null, kmlDocument) as FolderOverlay
-                        map.overlays.add(kmlOverlay)
-                        map.invalidate()
+                        map?.overlays?.add(kmlOverlay)
+                        map?.invalidate()
                         val bb = kmlDocument.mKmlRoot.getBoundingBox()
-                        map.zoomToBoundingBox(bb, true)
+                        map?.zoomToBoundingBox(bb, true)
                     }
                 }
             }
