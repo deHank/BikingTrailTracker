@@ -7,12 +7,15 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.location.Location
 import android.location.LocationManager
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.preference.PreferenceManager
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
@@ -36,12 +39,15 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults.topAppBarColors
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -71,72 +77,113 @@ class MainActivity : ComponentActivity() {
 
     private lateinit var location: Location
     private lateinit var handler: Handler
+    private var permissionCheckCompleted: MutableState<Boolean> = mutableStateOf(false)
 
 
 
+    // Using Activity Result API for cleaner permission handling (recommended for modern Android)
+    private val requestPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
+            val fineLocationGranted = permissions[Manifest.permission.ACCESS_FINE_LOCATION] ?: false
+            val coarseLocationGranted = permissions[Manifest.permission.ACCESS_COARSE_LOCATION] ?: false
+
+            if (fineLocationGranted || coarseLocationGranted) {
+                // Permissions are granted, proceed with location-dependent operations
+                Toast.makeText(this, "Location permissions granted!", Toast.LENGTH_SHORT).show()
+                //startFitFileGeneration()
+                permissionCheckCompleted.value = true
+            } else {
+                // Permissions denied, inform the user
+                Toast.makeText(this, "Location permissions denied.", Toast.LENGTH_LONG).show()
+                permissionCheckCompleted.value = true
+            }
+        }
 
 
+    /**
+     * Checks if location permissions are granted. If not, requests them.
+     */
+    private fun checkAndRequestLocationPermissions() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
+            ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            // Permissions are already granted
+            //startFitFileGeneration()
+        } else {
+            // Permissions are not granted, request them
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                // Request both fine and coarse location permissions
+                requestPermissionLauncher.launch(
+                    arrayOf(
+                        Manifest.permission.ACCESS_FINE_LOCATION,
+                        Manifest.permission.ACCESS_COARSE_LOCATION
+                    )
+                )
+                permissionCheckCompleted.value = true
+            } else {
+                // For API < 23, permissions are granted at install time.
+                // You might still want to inform the user or handle older device specifics.
+                permissionCheckCompleted.value = true            }
+        }
+    }
 
 
     @SuppressLint("MissingPermission")
     override fun onCreate(savedInstanceState: Bundle?) {
 
-
+        checkAndRequestLocationPermissions()
 
        // locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,1000, .01f, locationListener)
 
+        if(permissionCheckCompleted.value) {
 
-        map = MapView(this)
-        val trackWriter = TrackWriter(map)
-        getInstance().load(this, PreferenceManager.getDefaultSharedPreferences(this))
-
-
-
+            map = MapView(this)
+            val trackWriter = TrackWriter(map)
+            getInstance().load(this, PreferenceManager.getDefaultSharedPreferences(this))
 
 
-        //locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
+            //locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
 
-        //handle permissions first, before map is created. not depicted here
+            //handle permissions first, before map is created. not depicted here
 
-        //load/initialize the osmdroid configuration, this can be done
-        // This won't work unless you have imported this: org.osmdroid.config.Configuration.*
-        getInstance().load(this, PreferenceManager.getDefaultSharedPreferences(this))
-        //setting this before the layout is inflated is a good idea
-        //it 'should' ensure that the map has a writable location for the map cache, even without permissions
-        //if no tiles are displayed, you can try overriding the cache path using Configuration.getInstance().setCachePath
-        //see also StorageUtils
-        //note, the load method also sets the HTTP User Agent to your application's package name, if you abuse osm's
-        //tile servers will get you banned based on this string.
+            //load/initialize the osmdroid configuration, this can be done
+            // This won't work unless you have imported this: org.osmdroid.config.Configuration.*
+            getInstance().load(this, PreferenceManager.getDefaultSharedPreferences(this))
+            //setting this before the layout is inflated is a good idea
+            //it 'should' ensure that the map has a writable location for the map cache, even without permissions
+            //if no tiles are displayed, you can try overriding the cache path using Configuration.getInstance().setCachePath
+            //see also StorageUtils
+            //note, the load method also sets the HTTP User Agent to your application's package name, if you abuse osm's
+            //tile servers will get you banned based on this string.
 
-        //inflate and create the map
-        //setContentView(R.layout.main)
-        super.onCreate(savedInstanceState)
-        // Set content with Jetpack Compose
-        setContent {
-            UITutorialTheme {
-                // Initialize the NavController
-                val navController = rememberNavController()
+            //inflate and create the map
+            //setContentView(R.layout.main)
+            super.onCreate(savedInstanceState)
+            // Set content with Jetpack Compose
+            setContent {
+                UITutorialTheme {
+                    // Initialize the NavController
+                    val navController = rememberNavController()
 
-                // Define the navigation graph
-                NavHost(navController, startDestination = "main") {
-                    composable("main") {
-                        // Your main screen content
-                        BottomAppBarExample(navController, map, trackWriter)
-                    }
-                    composable("pastTracksViewer") {
-                        // Content for the Past Tracks Viewer screen
-                        PastTracksViewerActivity(navController, map)
-                    }
-                    composable("CurrentTrackViewerActivity"){
-                        CurrentTrackViewerActivity(navController , trackWriter)
+                    // Define the navigation graph
+                    NavHost(navController, startDestination = "main") {
+                        composable("main") {
+                            // Your main screen content
+                            BottomAppBarExample(navController, map, trackWriter)
+                        }
+                        composable("pastTracksViewer") {
+                            // Content for the Past Tracks Viewer screen
+                            PastTracksViewerActivity(navController, map)
+                        }
+                        composable("CurrentTrackViewerActivity") {
+                            CurrentTrackViewerActivity(navController, trackWriter)
+                        }
                     }
                 }
             }
+            map.controller.setZoom(1.0)
+            goToCurrentLocation()
+
         }
-        map.controller.setZoom(1.0)
-        goToCurrentLocation()
-
-
     }
 
     fun goToCurrentLocation(){
