@@ -1,5 +1,7 @@
 package com.example.uitutorial
 
+import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -11,6 +13,8 @@ import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LargeFloatingActionButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -24,6 +28,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.viewmodel.compose.viewModel
 import org.osmdroid.config.Configuration
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
+import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.compass.CompassOverlay
 import org.osmdroid.views.overlay.gestures.RotationGestureOverlay
@@ -36,6 +41,7 @@ fun MapHomeView(mapViewModel: MapViewModel = viewModel()) {
     val context = LocalContext.current
 
     val mapView = remember {
+
         MapView(context).apply {
             Configuration.getInstance().load(context, context.getSharedPreferences("osmdroid", 0))
 
@@ -49,13 +55,16 @@ fun MapHomeView(mapViewModel: MapViewModel = viewModel()) {
             locationOverlay.enableMyLocation()
             locationOverlay.enableFollowLocation()
             locationOverlay.isDrawAccuracyEnabled = true
-            overlays.add(locationOverlay)
+
+            overlays.add(2, locationOverlay)
             controller.zoomTo(18)
             invalidate()
 
         }
     }
 
+
+    val currentLocation by mapViewModel.currentLocation.collectAsState()
     var selectedItem by remember { mutableStateOf(0) }
     Box(modifier = Modifier.fillMaxSize()) {
 
@@ -70,6 +79,18 @@ fun MapHomeView(mapViewModel: MapViewModel = viewModel()) {
         LargeFloatingActionButton(
             onClick = { mapViewModel.zoomToCurrentLocationAndFollow()
                 mapView.invalidate()
+                currentLocation?.let { loc ->
+                    val geoPoint = GeoPoint(loc.latitude, loc.longitude)
+                    mapView.controller.setCenter(geoPoint)
+                    // You might also want to set a zoom level here if desired when centering
+                    mapView.controller.setZoom(18)
+                    var locationOverlay = mapView.overlays[2] as MyLocationNewOverlay
+                    locationOverlay.enableFollowLocation()
+                    mapView.invalidate() // Redraw the map
+                    Log.d("MapHomeView", "Map centered via button to: ${geoPoint.latitude}, ${geoPoint.longitude}")
+                } ?: run {
+                    Toast.makeText(mapView.context, "No current location available to center map.", Toast.LENGTH_SHORT).show()
+                }
 
             },
             containerColor = BottomAppBarDefaults.bottomAppBarFabColor,

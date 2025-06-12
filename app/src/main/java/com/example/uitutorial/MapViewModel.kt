@@ -17,8 +17,8 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
     private val gpsHandler = GPSHandler(application)
 
     // LiveData for the current location to be displayed on the map and for zooming
-    private val _currentLocation = MutableLiveData<Location>()
-    val currentLocation: LiveData<Location> = _currentLocation
+    val _currentLocation = MutableStateFlow<Location??>(null)
+    val currentLocation = MutableStateFlow<Location??>(null)
 
     // State for the map's desired center (can be current location or manually set)
     private val _mapCenter = MutableLiveData<GeoPoint>()
@@ -36,15 +36,33 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
         // Observing Location Updates from GPSHandler
         viewModelScope.launch {
             gpsHandler.getCurrentLocation()
+            startLocationUpdates()
         }
+    }
+
+    //function to start listening for GPS location updates
+    //updates the _currentLocation StateFlow when a new location is received
+    fun startLocationUpdates() {
+        viewModelScope.launch {
+            var location = gpsHandler.getCurrentLocation()
+            if (location != null) {
+                _currentLocation.value = location
+                currentLocation.value = location
+                _mapCenter.postValue(GeoPoint(location.latitude, location.longitude))
+            }
+
+        }
+
     }
 
     /**
      * Call this when the user wants to re-center the map to their current location.
      */
     fun zoomToCurrentLocationAndFollow() {
+        Log.w("MapViewModel", "zoomToCurrentLocationAndFollow called.")
         _isFollowLocationEnabled.value = true // Ensure follow mode is enabled
         _mapZoom.postValue(18.0) // Set preferred zoom level
+
         _currentLocation.value?.let { loc ->
             _mapCenter.postValue(GeoPoint(loc.latitude, loc.longitude)) // Force center to current location
         } ?: run {
