@@ -70,24 +70,6 @@ import java.io.File
 // These are added to make the MainActivity code compile and run for demonstration.
 // In a real project, these would be in their own respective files.
 
-/**
- * Dummy implementation of FitFileWriter.
- * In a real app, this would use the Garmin FIT SDK to write actual .fit files.
- */
-class FitFileWriter(private val context: Context) {
-    fun writeSampleFitFile(fileName: String) {
-        Log.d("FitFileWriter", "Writing sample FIT file: $fileName")
-        // Actual FIT file writing logic would go here, using the Garmin FIT SDK.
-        // Example:
-        // val file = File(context.filesDir, fileName)
-        // val outputStream = FileOutputStream(file)
-        // val fileEncoder = FileEncoder(outputStream, com.garmin.fit.Fit.ProtocolVersion.V2_0)
-        // ... (add FileIdMesg, SessionMesg, RecordMesg etc.)
-        // fileEncoder.close()
-        // outputStream.close()
-        Toast.makeText(context, "Dummy FIT file '$fileName' written (check logs)", Toast.LENGTH_SHORT).show()
-    }
-}
 
 /**
  * Dummy implementation of TrackWriter.
