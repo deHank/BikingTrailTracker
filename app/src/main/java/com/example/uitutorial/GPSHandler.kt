@@ -14,6 +14,10 @@ import androidx.core.location.LocationListenerCompat
 import androidx.core.location.LocationManagerCompat
 import androidx.core.location.LocationRequestCompat
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.withContext
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
@@ -29,7 +33,12 @@ class GPSHandler(private val context: Context) {
     private lateinit var looperThread: Thread
     private lateinit var backgroundHandler: Handler
 
-
+    // Using a shared flow or a replay cache to provide the *latest* location
+    private val _locationUpdates = MutableSharedFlow<Location>(
+        replay = 1, // Keep the last emitted item
+        onBufferOverflow = BufferOverflow.DROP_OLDEST // Drop if buffer is full
+    )
+    val locationUpdates: Flow<Location> = _locationUpdates.asSharedFlow() // Expose as SharedFlow
 
 
 

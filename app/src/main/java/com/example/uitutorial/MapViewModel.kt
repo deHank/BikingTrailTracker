@@ -60,4 +60,6 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
         _isFollowLocationEnabled.value = false
         Log.d("MapViewModel", "Map manually moved, follow location disabled.")
     }
+
+
 }
