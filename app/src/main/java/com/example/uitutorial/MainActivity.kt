@@ -2,6 +2,7 @@ package com.example.uitutorial
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.app.Application
 import android.content.Context
 import android.content.pm.PackageManager
 import android.location.Location
@@ -130,47 +131,6 @@ fun CurrentTrackViewerActivity(navController: NavHostController, trackWriter: Tr
 }
 
 
-/**
- * Dummy GPSHandler for simulating location updates.
- */
-class GPSHandler(private val context: Context, private val locationManager: LocationManager) {
-    private val handler = Handler()
-    private var locationRunnable: Runnable? = null
-    private var locationUpdateListener: ((Location) -> Unit)? = null
-
-    @SuppressLint("MissingPermission") // Permissions handled at higher level
-    fun startLocationUpdates(listener: (Location) -> Unit) {
-        this.locationUpdateListener = listener
-        Log.d("GPSHandler", "Starting dummy location updates.")
-
-        // Simulate location updates periodically
-        locationRunnable = object : Runnable {
-            override fun run() {
-                val dummyLocation = Location("dummy_provider").apply {
-                    latitude = 37.540721 + (Math.random() - 0.5) * 0.01
-                    longitude = -77.436050 + (Math.random() - 0.5) * 0.01
-                    altitude = 100.0 + (Math.random() - 0.5) * 5
-                    time = System.currentTimeMillis()
-                    speed = (5.0f + (Math.random() - 0.5) * 2).toFloat()
-                    bearing = (Math.random() * 360).toFloat()
-                    accuracy = (5.0f + Math.random() * 5).toFloat()
-                }
-                locationUpdateListener?.invoke(dummyLocation)
-                handler.postDelayed(this, 3000) // Update every 3 seconds
-            }
-        }
-        handler.post(locationRunnable!!)
-    }
-
-    fun stopLocationUpdates() {
-        Log.d("GPSHandler", "Stopping dummy location updates.")
-        locationRunnable?.let { handler.removeCallbacks(it) }
-        locationRunnable = null
-        locationUpdateListener = null
-    }
-}
-
-//endregion Dummy Implementations
 
 
 class MainActivity : ComponentActivity() {
@@ -535,9 +495,9 @@ fun BottomAppBarExample(navController: NavHostController, map: MapView?, trackWr
                                 .setConstraints(constraints)
                                 .setInputData(Data.Builder().putString("mapViewKey", "mapViewInstance").build())
                                 .build()
-
-                            WorkManager.getInstance(context).enqueue(trackWriterWorker)
-                            navController.navigate("CurrentTrackViewerActivity")
+//
+//                            WorkManager.getInstance(context).enqueue(trackWriterWorker)
+                            //navController.navigate("CurrentTrackViewerActivity")
                         },
                         containerColor = BottomAppBarDefaults.bottomAppBarFabColor,
                         elevation = FloatingActionButtonDefaults.bottomAppBarFabElevation()
@@ -555,7 +515,7 @@ fun BottomAppBarExample(navController: NavHostController, map: MapView?, trackWr
                 .clip(shape = RoundedCornerShape(20.dp)),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            MapHomeView(map) // Pass the possibly null MapView instance to the MapHomeView composable
+            MapHomeView()
         }
     }
 }

@@ -1,27 +1,20 @@
+package com.example.uitutorial
+
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
 import android.location.Location
-import android.location.LocationListener
 import android.location.LocationManager
-import android.location.LocationProvider
-import android.os.Bundle
 import android.os.Handler
-import android.os.HandlerThread
 import android.os.Looper
 import android.util.Log
-import androidx.activity.ComponentActivity
-import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.core.content.ContextCompat.getSystemService
 import androidx.core.location.LocationListenerCompat
 import androidx.core.location.LocationManagerCompat
 import androidx.core.location.LocationRequestCompat
-import com.example.uitutorial.gpsDataHandler.aLocationListener
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
@@ -64,7 +57,8 @@ class GPSHandler(private val context: Context) {
         val locationListener = object : LocationListenerCompat {
             override fun onLocationChanged(location: Location) {
                 // Handle location updates
-                //Log.d("LocationListener", "Location changed: $location")
+                Log.d("LocationListener", "Location changed: $location")
+                Log.d("LocationListener", "Speed was: ${location.speed}")
                 // You can update the UI or perform any action based on the new location
             }
 

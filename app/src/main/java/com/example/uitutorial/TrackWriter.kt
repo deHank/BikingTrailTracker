@@ -1,6 +1,6 @@
 package com.example.uitutorial
 
-import GPSHandler
+import com.example.uitutorial.GPSHandler
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Color
