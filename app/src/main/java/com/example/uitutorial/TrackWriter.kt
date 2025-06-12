@@ -12,6 +12,19 @@ import android.util.Log
 import androidx.core.location.LocationListenerCompat
 import androidx.core.location.LocationManagerCompat
 import androidx.core.location.LocationRequestCompat
+import com.garmin.fit.Activity
+import com.garmin.fit.ActivityType
+import com.garmin.fit.DateTime
+import com.garmin.fit.Event
+import com.garmin.fit.EventMesg
+import com.garmin.fit.EventType
+import com.garmin.fit.FileEncoder
+import com.garmin.fit.FileIdMesg
+import com.garmin.fit.Fit
+import com.garmin.fit.FitMessages
+import com.garmin.fit.GarminProduct
+import com.garmin.fit.Manufacturer
+import com.garmin.fit.util.DateTimeConverter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -29,15 +42,18 @@ import org.osmdroid.views.overlay.Marker
 import org.osmdroid.views.overlay.Polyline
 import java.io.BufferedWriter
 import java.io.File
+import java.io.FileOutputStream
 import java.io.FileWriter
 import java.util.Date
 import java.util.Locale
+import kotlin.coroutines.coroutineContext
 
 
-class TrackWriter(map: MapView?) {
+class TrackWriter(map: MapView?, private var context: Context) {
     private val refreshIntervalMs: Long = 3000
     private lateinit var currLocation: Location
 
+    private var fitFilter = FitMessages()
     val latestNews: Flow<Location> = flow {
         while(true) {
             val latestNews = GPSTrackWriter(map)
@@ -46,25 +62,38 @@ class TrackWriter(map: MapView?) {
         }
     }
 
-
-
     var speed = 0.0f
-    val locationListener = object : LocationListenerCompat {
-        override fun onLocationChanged(location: Location) {
-            // Handle location updates
-            Log.d("LocationListener", "Location changed: $location")
-            // You can update the UI or perform any action based on the new location
-        }
+    fun fitExampleWriter(){
+        val tag = "FitFileWriter"
+        val manufacturer = Manufacturer.DEVELOPMENT
+        val productID = 12345
 
-        override fun onProviderEnabled(provider: String) {
-            // Handle when the location provider is enabled
-            Log.d("LocationListener", "Provider enabled: $provider")
-        }
+        val file = File("testLocation")
+        var FileOutputStream = FileOutputStream(file)
+        var fileEncoder = FileEncoder(file, Fit.ProtocolVersion.V2_0)
+        var fileName = "test.fit"
+        //date in format for .fit file
+        var date = DateTime(System.currentTimeMillis())
 
-        override fun onProviderDisabled(provider: String) {
-            // Handle when the location provider is disabled
-            Log.d("LocationListener", "Provider disabled: $provider")
-        }
+        val fileIDMessage = FileIdMesg()
+
+        fileIDMessage.type = com.garmin.fit.File.ACTIVITY
+        fileIDMessage.manufacturer = manufacturer
+        fileIDMessage.product = productID
+        fileIDMessage.serialNumber = System.currentTimeMillis()
+        fileIDMessage.timeCreated = date
+        fileEncoder.write(fileIDMessage)
+        Log.d(tag, "Step 1. FileIdMessage Writer")
+
+        //start even message
+        val eventMessageStart = EventMesg()
+        eventMessageStart.timestamp = date
+        eventMessageStart.event = Event.TIMER
+        eventMessageStart.eventType = EventType.START
+
+
+
+
     }
 
     fun getCurrentDateTime(): String {
@@ -81,6 +110,7 @@ class TrackWriter(map: MapView?) {
     fun startWritingTrack(map: MapView, locationHandler: GPSHandler) {
         map.invalidate()
         CoroutineScope(Dispatchers.IO).launch {
+
         }
     }
 

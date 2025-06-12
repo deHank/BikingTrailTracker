@@ -68,6 +68,7 @@ dependencies {
     implementation(libs.osmbonuspack)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.work.runtime.ktx)
+    implementation("com.garmin:fit:21.171.0")
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
