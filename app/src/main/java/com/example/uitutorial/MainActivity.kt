@@ -2,20 +2,18 @@ package com.example.uitutorial
 
 import android.Manifest
 import android.annotation.SuppressLint
-import android.app.Application
 import android.content.Context
 import android.content.pm.PackageManager
-import android.location.Location
 import android.location.LocationManager
 import android.os.Build
 import android.os.Bundle
-import android.os.Handler
 import android.preference.PreferenceManager
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -44,10 +42,8 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults.topAppBarColors
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -65,12 +61,10 @@ import androidx.work.Constraints
 import androidx.work.Data
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
-import androidx.work.WorkManager
 import com.example.uitutorial.ui.theme.UITutorialTheme
 import org.osmdroid.config.Configuration.getInstance
 import org.osmdroid.views.MapView
 import java.io.File
-import java.util.*
 
 //region Dummy Implementations for classes not provided in the original snippet
 // These are added to make the MainActivity code compile and run for demonstration.
@@ -166,6 +160,22 @@ class MainActivity : ComponentActivity() {
             permissionCheckCompleted.value = true // Permission check process is now complete.
         }
 
+    // Using `by viewModels()` with a custom ViewModelFactory because MapViewModel now
+    // has a constructor parameter (TrackWriter).
+    private val mapViewModel: MapViewModel by viewModels {
+        object : androidx.lifecycle.ViewModelProvider.Factory {
+            override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
+                if (modelClass.isAssignableFrom(MapViewModel::class.java)) {
+                    // Ensure trackWriter is not null here. setupCoreAppComponents guarantees it.
+                    // This factory will only be called after setupCoreAppComponents.
+                    @Suppress("UNCHECKED_CAST")
+                    return MapViewModel(application, trackWriter!!) as T
+                }
+                throw IllegalArgumentException("Unknown ViewModel class")
+            }
+        }
+    }
+
     /**
      * Checks if location permissions are already granted. If not, requests them.
      * This method is called once at the start of the activity to initiate the permission flow.
@@ -223,7 +233,7 @@ class MainActivity : ComponentActivity() {
                                     // a fallback Text is displayed.
                                     map?.let { mapInstance ->
                                         trackWriter?.let { trackWriterInstance ->
-                                            BottomAppBarExample(navController, mapInstance, trackWriterInstance)
+                                            BottomAppBarExample(navController, mapInstance, mapViewModel = mapViewModel)
                                         } ?: Text("Error: TrackWriter not initialized.", modifier = Modifier.align(Alignment.Center))
                                     } ?: Text("Error: MapView not initialized.", modifier = Modifier.align(Alignment.Center))
                                 }
@@ -264,12 +274,13 @@ class MainActivity : ComponentActivity() {
      * location permissions have been successfully granted.
      */
     private fun setupCoreAppComponents() {
+        val locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
         // Ensure components are only initialized once.
         if (map == null) {
             // Initialize MapView
             map = MapView(this)
             // Initialize TrackWriter, passing the non-null MapView instance.
-            trackWriter = TrackWriter(map!!) // !! is safe here because we just assigned `map`
+            //trackWriter = TrackWriter(map) // !! is safe here because we just assigned `map`
             // Load osmdroid configuration.
             getInstance().load(this, PreferenceManager.getDefaultSharedPreferences(this))
 
@@ -279,6 +290,7 @@ class MainActivity : ComponentActivity() {
             // This will likely involve a LocationManager or FusedLocationProviderClient.
             goToCurrentLocation()
         }
+        trackWriter = TrackWriter(context = applicationContext, locationManager)
     }
 
     /**
@@ -434,7 +446,7 @@ fun onMapChanged(mapView: MapView) {
 @SuppressLint("MissingPermission") // Suppress lint warning because permissions are checked at a higher level
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BottomAppBarExample(navController: NavHostController, map: MapView?, trackWriter: TrackWriter?) { // Marked map and trackWriter as nullable
+fun BottomAppBarExample(navController: NavHostController, map: MapView?, mapViewModel: MapViewModel) { // Marked map and trackWriter as nullable
     val context = LocalContext.current
     Scaffold(
         topBar = {
@@ -515,7 +527,7 @@ fun BottomAppBarExample(navController: NavHostController, map: MapView?, trackWr
                 .clip(shape = RoundedCornerShape(20.dp)),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            MapHomeView()
+            MapHomeView(map, mapViewModel)
         }
     }
 }

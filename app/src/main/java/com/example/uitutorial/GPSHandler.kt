@@ -25,12 +25,7 @@ import kotlinx.coroutines.withContext
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
-class GPSHandler(private val context: Context) {
-
-
-
-    private var locationManager: LocationManager =
-        context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+class GPSHandler(private val context: Context, private val locationManager: LocationManager) {
 
     private var lastKnownLocation: Location? = null
     private lateinit var looperThread: Thread

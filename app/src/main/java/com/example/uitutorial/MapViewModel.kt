@@ -13,8 +13,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import org.osmdroid.util.GeoPoint
 
-class MapViewModel(application: Application) : AndroidViewModel(application) {
-    private val gpsHandler = GPSHandler(application)
+class MapViewModel(application: Application, private val trackWriter: TrackWriter) : AndroidViewModel(application) {
+    //private val gpsHandler = GPSHandler(application)
 
     // LiveData for the current location to be displayed on the map and for zooming
     val _currentLocation = MutableStateFlow<Location??>(null)
@@ -35,21 +35,22 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
     init {
         // Observing Location Updates from GPSHandler
         viewModelScope.launch {
-            gpsHandler.getCurrentLocation()
+            //gpsHandler.getCurrentLocation()
             startLocationUpdates()
         }
     }
 
     //function to start listening for GPS location updates
     //updates the _currentLocation StateFlow when a new location is received
+    //will need to be updated for TrackWriter
     fun startLocationUpdates() {
         viewModelScope.launch {
-            var location = gpsHandler.getCurrentLocation()
-            if (location != null) {
-                _currentLocation.value = location
-                currentLocation.value = location
-                _mapCenter.postValue(GeoPoint(location.latitude, location.longitude))
-            }
+//            //var location = gpsHandler.getCurrentLocation()
+//            if (location != null) {
+//                _currentLocation.value = location
+//                currentLocation.value = location
+//                _mapCenter.postValue(GeoPoint(location.latitude, location.longitude))
+//            }
 
         }
 

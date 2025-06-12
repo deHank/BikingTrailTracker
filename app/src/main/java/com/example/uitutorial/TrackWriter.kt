@@ -49,14 +49,15 @@ import java.util.Locale
 import kotlin.coroutines.coroutineContext
 
 
-class TrackWriter(map: MapView?, private var context: Context) {
+class TrackWriter(private var context: Context, private val locationManager: LocationManager) {
     private val refreshIntervalMs: Long = 3000
     private lateinit var currLocation: Location
+    private val gpsHandler: GPSHandler = GPSHandler(context, locationManager) // Uses injected LocationManager
 
     private var fitFilter = FitMessages()
     val latestNews: Flow<Location> = flow {
         while(true) {
-            val latestNews = GPSTrackWriter(map)
+            //val latestNews = GPSTrackWriter(map)
             emit(currLocation) // Emits the result of the request to the flow
             delay(refreshIntervalMs) // Suspends the coroutine for some time
         }
@@ -90,6 +91,21 @@ class TrackWriter(map: MapView?, private var context: Context) {
         eventMessageStart.timestamp = date
         eventMessageStart.event = Event.TIMER
         eventMessageStart.eventType = EventType.START
+
+        // --- Step 3: Record Messages (The core time-series data for the track) ---
+        // Iterate through your collected Location data and create a RecordMesg for each.
+        var cumulativeDistance = 0.0F
+        var previousLocation: Location? = null
+        var totalTimerTime = 0.0F
+        var totalElapsedTime = 0.0F
+
+        // Metrics for Lap/Session summary
+        var minHeartRate: Short = 255
+        var maxHeartRate: Short = 0
+        var minSpeed: Float = Float.MAX_VALUE
+        var maxSpeed: Float = 0.0F
+        var totalCalories: Int = 0 // Needs proper calculation in a real app
+
 
 
 
