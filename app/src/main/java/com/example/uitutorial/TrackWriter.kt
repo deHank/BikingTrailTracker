@@ -1,16 +1,19 @@
 package com.example.uitutorial
 
 import FitFileWriter
+import android.Manifest
 import android.R.attr.tag
 import com.example.uitutorial.GPSHandler
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.pm.PackageManager
 import android.graphics.Color
 import android.icu.text.SimpleDateFormat
 import android.location.Location
 import android.location.LocationManager
 import android.os.HandlerThread
 import android.util.Log
+import androidx.core.content.ContextCompat
 import androidx.core.location.LocationListenerCompat
 import androidx.core.location.LocationManagerCompat
 import androidx.core.location.LocationRequestCompat
@@ -33,6 +36,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.osmdroid.bonuspack.kml.KmlDocument
 import org.osmdroid.bonuspack.kml.KmlPlacemark
 import org.osmdroid.bonuspack.kml.KmlTrack
@@ -49,6 +53,8 @@ import java.io.FileWriter
 import java.util.Date
 import java.util.Locale
 import kotlin.coroutines.coroutineContext
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
 
 
 class TrackWriter(private var context: Context, private val locationManager: LocationManager) {
@@ -118,6 +124,35 @@ class TrackWriter(private var context: Context, private val locationManager: Loc
         var maxSpeed: Float = 0.0F
         var totalCalories: Int = 0 // Needs proper calculation in a real app
 
+    }
+
+    suspend fun getCurrentLocation(): Location? {
+        return withContext(Dispatchers.IO) {
+            if (ContextCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.ACCESS_FINE_LOCATION
+                ) != PackageManager.PERMISSION_GRANTED &&
+                ContextCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                // Permission not granted, handle it as needed
+                return@withContext null
+            }
+
+            val location = suspendCoroutine<Location?> { continuation ->
+                // Retrieve the last known location
+                val lastKnownLocation =
+                    locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
+                if (lastKnownLocation != null) {
+                    // Return the last known location if available
+                    continuation.resume(lastKnownLocation)
+                }
+            }
+
+            location
+        }
     }
 
     fun startRecording(){

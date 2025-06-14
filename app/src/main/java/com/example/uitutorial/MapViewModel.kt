@@ -45,12 +45,12 @@ class MapViewModel(application: Application, private val trackWriter: TrackWrite
     //will need to be updated for TrackWriter
     fun startLocationUpdates() {
         viewModelScope.launch {
-//            //var location = gpsHandler.getCurrentLocation()
-//            if (location != null) {
-//                _currentLocation.value = location
-//                currentLocation.value = location
-//                _mapCenter.postValue(GeoPoint(location.latitude, location.longitude))
-//            }
+            val location = trackWriter.getCurrentLocation()
+            if (location != null) {
+                _currentLocation.value = location
+                currentLocation.value = location
+                _mapCenter.postValue(GeoPoint(location.latitude, location.longitude))
+            }
 
         }
 

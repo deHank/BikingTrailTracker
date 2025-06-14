@@ -62,7 +62,7 @@ fun MapHomeView(mapViewModel: MapView?, mapViewModel1: MapViewModel) {
     }
 
 
-    //val currentLocation by mapViewModel.currentLocation.collectAsState()
+    val currentLocation by mapViewModel1.currentLocation.collectAsState()
     var selectedItem by remember { mutableStateOf(0) }
     Box(modifier = Modifier.fillMaxSize()) {
 
@@ -76,20 +76,20 @@ fun MapHomeView(mapViewModel: MapView?, mapViewModel1: MapViewModel) {
         // Compose button overlaid on top of the custom view
         LargeFloatingActionButton(
             onClick = {
-//                mapViewModel.zoomToCurrentLocationAndFollow()
-//                mapView.invalidate()
-//                currentLocation?.let { loc ->
-//                    val geoPoint = GeoPoint(loc.latitude, loc.longitude)
-//                    mapView.controller.setCenter(geoPoint)
-//                    // You might also want to set a zoom level here if desired when centering
-//                    mapView.controller.setZoom(18)
-//                    var locationOverlay = mapView.overlays[2] as MyLocationNewOverlay
-//                    locationOverlay.enableFollowLocation()
-//                    mapView.invalidate() // Redraw the map
-//                    Log.d("MapHomeView", "Map centered via button to: ${geoPoint.latitude}, ${geoPoint.longitude}")
-//                } ?: run {
-//                    Toast.makeText(mapView.context, "No current location available to center map.", Toast.LENGTH_SHORT).show()
-//                }
+                mapViewModel1.zoomToCurrentLocationAndFollow()
+                mapView.invalidate()
+                currentLocation?.let { loc ->
+                    val geoPoint = GeoPoint(loc.latitude, loc.longitude)
+                    mapView.controller.setCenter(geoPoint)
+                    // You might also want to set a zoom level here if desired when centering
+                    mapView.controller.setZoom(18)
+                    var locationOverlay = mapView.overlays[2] as MyLocationNewOverlay
+                    locationOverlay.enableFollowLocation()
+                    mapView.invalidate() // Redraw the map
+                    Log.d("MapHomeView", "Map centered via button to: ${geoPoint.latitude}, ${geoPoint.longitude}")
+                } ?: run {
+                    Toast.makeText(mapView.context, "No current location available to center map.", Toast.LENGTH_SHORT).show()
+                }
 
             },
             containerColor = BottomAppBarDefaults.bottomAppBarFabColor,
