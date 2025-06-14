@@ -471,6 +471,7 @@ fun BottomAppBarExample(navController: NavHostController, map: MapView?, mapView
                     FloatingActionButton(
                         onClick = {
                             Log.d("Floating red Action Button", "Button was pressed")
+                            mapViewModel.startRecordingAndSaveFile()
                             // Safely remove overlays. `map?.overlays` returns null if map is null.
                             // If `map.overlays` is null, `filter` and `removeAll` won't be called.
                             map?.let {

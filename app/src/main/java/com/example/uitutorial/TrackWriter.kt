@@ -13,6 +13,7 @@ import android.location.Location
 import android.location.LocationManager
 import android.os.HandlerThread
 import android.util.Log
+import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.core.location.LocationListenerCompat
 import androidx.core.location.LocationManagerCompat
@@ -82,6 +83,8 @@ class TrackWriter(private var context: Context, private val locationManager: Loc
     }
 
     var speed = 0.0f
+
+
     fun fitExampleWriter(){
         val tag = "FitFileWriter"
         val manufacturer = Manufacturer.DEVELOPMENT
@@ -161,21 +164,26 @@ class TrackWriter(private var context: Context, private val locationManager: Loc
         // Start new FIT file
         val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
         val fileName = "activity_$timestamp.fit"
-        val file = File("testPath")
+        val file = File(context.filesDir,"testPath")
         val fitFileEncoder = FileEncoder(file, Fit.ProtocolVersion.V2_0)
-        //fitFileWriter.writeSampleFitFile("test")
+
+        fitFileWriter.startNewFitFile(fileName, com.garmin.fit.Sport.RUNNING)
         // Example: assume running sport
         //fitFileEncoder.write()
         //if we are not recording
         if( !_isRecording.value){
             _isRecording.value = true
             gpsHandler.startLocationUpdates {
+                //updating the flow for the UI
                 newLocation -> _currentRecordedLocation.value = newLocation
                 //doubleChecking to make sure we are recording
                 if(_isRecording.value){
-
+                    fitFileWriter.addRecord(newLocation)
+                    Log.d(TAG, "Recorded location and added to FIT file: ${newLocation.latitude}, ${newLocation.longitude}\"")
                 }
             }
+            Log.d(TAG, "Recording started. _recordedLocationsForDrawing cleared.")
+            Toast.makeText(context, "Recording started!", Toast.LENGTH_SHORT).show()
         }
     }
 

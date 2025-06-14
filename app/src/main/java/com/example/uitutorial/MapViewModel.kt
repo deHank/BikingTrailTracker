@@ -56,6 +56,10 @@ class MapViewModel(application: Application, private val trackWriter: TrackWrite
 
     }
 
+    fun startRecordingAndSaveFile(){
+        trackWriter.startRecording()
+    }
+
     /**
      * Call this when the user wants to re-center the map to their current location.
      */
