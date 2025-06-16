@@ -187,6 +187,10 @@ class TrackWriter(private var context: Context, private val locationManager: Loc
         }
     }
 
+    fun endRecording(){
+        fitFileWriter.endFitFile()
+    }
+
     fun getCurrentDateTime(): String {
         val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
         val currentDate = Date()

@@ -460,7 +460,7 @@ fun BottomAppBarExample(navController: NavHostController, map: MapView?, mapView
                     }) {
                         Icon(Icons.Filled.Edit, contentDescription = "Localized description")
                     }
-                    IconButton(onClick = { /* do something */ }) {
+                    IconButton(onClick = { mapViewModel.finishRecordingAndSaveFile() }) {
                         Icon(Icons.Filled.Check, contentDescription = "Localized description")
                     }
                     IconButton(onClick = { /* do something */ }) {
