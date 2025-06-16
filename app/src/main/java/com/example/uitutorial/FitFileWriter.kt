@@ -2,9 +2,12 @@ import android.content.Context
 import android.location.Location
 import android.util.Log
 import android.widget.Toast
+import com.garmin.fit.Fit
+import com.garmin.fit.util.SemicirclesConverter
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
+import java.util.Date
 import kotlin.random.Random
 
 class FitFileWriter(private val context: Context) {
@@ -59,7 +62,7 @@ class FitFileWriter(private val context: Context) {
             firstLocationTime = null // Will be set with the first record
 
             // --- FileId Message (Mandatory first message) ---
-            fileCreationTime = com.garmin.fit.DateTime(System.currentTimeMillis() / 1000L)
+            fileCreationTime = com.garmin.fit.DateTime(Date())
             val fileIdMesg = com.garmin.fit.FileIdMesg()
             fileIdMesg.setType(com.garmin.fit.File.ACTIVITY)
             fileIdMesg.setManufacturer(MANUFACTURER_ID)
@@ -114,11 +117,11 @@ class FitFileWriter(private val context: Context) {
         }
 
         if (firstLocationTime == null) {
-            firstLocationTime = com.garmin.fit.DateTime(location.time / 1000L)
+            firstLocationTime = com.garmin.fit.DateTime(com.garmin.fit.DateTime(Date()))
         }
 
         val recordMesg = com.garmin.fit.RecordMesg()
-        recordMesg.setTimestamp(com.garmin.fit.DateTime(location.time / 1000L))
+        recordMesg.setTimestamp(com.garmin.fit.DateTime(Date()))
 
         // GPS Data
         //recordMesg.setPositionLat(com.garmin.fit.Fit.floatToSemicircles(location.latitude.toFloat()))
@@ -131,6 +134,11 @@ class FitFileWriter(private val context: Context) {
         recordMesg.setSpeed(location.speed) // m/s
         if (location.speed > maxSpeed) maxSpeed = location.speed
         if (location.speed < minSpeed) minSpeed = location.speed
+        //storing the latitude and longitude (locations)
+
+        recordMesg.positionLat = SemicirclesConverter.degreesToSemicircles(location.latitude)
+        recordMesg.positionLong = SemicirclesConverter.degreesToSemicircles(location.longitude)
+
 
         if (previousLocation != null) {
             val segmentDistance = location.distanceTo(previousLocation!!) // meters
@@ -173,7 +181,7 @@ class FitFileWriter(private val context: Context) {
             return
         }
 
-        val lastLocationTime = previousLocation?.let { com.garmin.fit.DateTime(it.time / 1000L) } ?: fileCreationTime
+        val lastLocationTime = previousLocation?.let { com.garmin.fit.DateTime(Date()) } ?: fileCreationTime
 
         if (lastLocationTime == null) {
             Log.e(TAG, "Cannot end FIT file, no time information available.")
