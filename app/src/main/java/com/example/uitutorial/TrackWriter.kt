@@ -188,6 +188,7 @@ class TrackWriter(private var context: Context, private val locationManager: Loc
     }
 
     fun endRecording(){
+        _isRecording.value = false
         fitFileWriter.endFitFile()
     }
 

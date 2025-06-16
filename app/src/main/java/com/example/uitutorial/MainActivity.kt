@@ -122,7 +122,7 @@ class MainActivity : ComponentActivity() {
     // State variables to control UI rendering based on permission status.
     private var isLocationPermissionGranted: MutableState<Boolean> = mutableStateOf(false)
     private var permissionCheckCompleted: MutableState<Boolean> = mutableStateOf(false)
-
+    private var pastTrackGrabber = PastTrackGrabber()
 
     // Activity Result Launcher for requesting multiple permissions.
     private val requestPermissionLauncher =
@@ -221,7 +221,7 @@ class MainActivity : ComponentActivity() {
                                 }
                                 composable("pastTracksViewer") {
                                     map?.let { mapInstance ->
-                                        PastTracksViewerActivity(navController, mapInstance)
+                                        PastTracksViewerActivity(navController, mapInstance, pastTrackGrabber)
                                     } ?: Text("Error: MapView not initialized.", modifier = Modifier.padding(16.dp).align(Alignment.Center))
                                 }
                                 composable("CurrentTrackViewerActivity"){
@@ -401,18 +401,7 @@ fun PermissionDeniedScreen(onRetryClick: () -> Unit) {
     }
 }
 
-// --- Helper function (can be in a separate file or companion object) ---
-/**
- * Helper function to retrieve a list of files from app's internal storage.
- */
-fun getFileList(context: Context): List<File> {
-    val tracksDir = File(context.filesDir, "tracks")
-    if (!tracksDir.exists()) {
-        tracksDir.mkdirs()
-    }
-    Log.d("PastTracksViewer", "files dir is " + tracksDir.canonicalPath)
-    return tracksDir.listFiles()?.toList() ?: emptyList()
-}
+
 
 /**
  * Placeholder for map change listener.

@@ -34,7 +34,11 @@ import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PastTracksViewerActivity(navController: NavHostController, map: MapView?) {
+fun PastTracksViewerActivity(
+    navController: NavHostController,
+    map: MapView?,
+    pastTrackGrabber: PastTrackGrabber
+) {
 
     val context = LocalContext.current
     Scaffold(
@@ -89,7 +93,7 @@ fun PastTracksViewerActivity(navController: NavHostController, map: MapView?) {
             // Display a list of clickable items using LazyColumn
             LazyColumn()
             {
-                val fileList = getFileList(context = context)
+                val fileList = pastTrackGrabber.getFileList(context = context)
                 items(fileList) { file ->
                     // Each item is contained within its own clickable block
                     ClickableItem(file = file) {

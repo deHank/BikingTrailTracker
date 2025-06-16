@@ -44,7 +44,15 @@ class FitFileWriter(private val context: Context) {
             return
         }
 
-        val file = File(context.filesDir, fileName)
+        // --- MODIFIED: Create 'tracks' subfolder and then the file within it ---
+        val tracksDir = File(context.filesDir, "tracks")
+        if (!tracksDir.exists()) {
+            tracksDir.mkdirs() // Create the directory if it doesn't exist
+            Log.d(TAG, "Created tracks directory: ${tracksDir.absolutePath}")
+        }
+        val file = File(tracksDir, fileName) // Create the file inside the tracks directory
+
+
         try {
             fileOutputStream = FileOutputStream(file)
             fileEncoder = com.garmin.fit.FileEncoder(file, com.garmin.fit.Fit.ProtocolVersion.V2_0)
