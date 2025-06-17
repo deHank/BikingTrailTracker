@@ -98,13 +98,7 @@ fun PastTracksViewerActivity(
                     // Each item is contained within its own clickable block
                     ClickableItem(file = file) {
                         Log.d("ClickableItem", "You clicked on file: ${file.name}")
-                        var kmlDocument = KmlDocument()
-                        kmlDocument.parseKMLFile(file)
-                        val kmlOverlay = kmlDocument.mKmlRoot.buildOverlay(map, null, null, kmlDocument) as FolderOverlay
-                        map?.overlays?.add(kmlOverlay)
-                        map?.invalidate()
-                        val bb = kmlDocument.mKmlRoot.getBoundingBox()
-                        map?.zoomToBoundingBox(bb, true)
+                        pastTrackGrabber.getPointsFromFile(context, file.name)
                     }
                 }
             }
