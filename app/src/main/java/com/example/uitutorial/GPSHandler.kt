@@ -106,7 +106,7 @@ class GPSHandler(private val context: Context, private val locationManager: Loca
 
         val looper = Looper.myLooper() ?: Looper.getMainLooper()
         val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
-        val locationRequest = LocationRequestCompat.Builder(200).setQuality(LocationRequestCompat.QUALITY_HIGH_ACCURACY).setMinUpdateIntervalMillis(100).build()
+        val locationRequest = LocationRequestCompat.Builder(900).setQuality(LocationRequestCompat.QUALITY_HIGH_ACCURACY).setMinUpdateIntervalMillis(100).build()
         //Log.d("Looper", "before starting created")
         LocationManagerCompat.requestLocationUpdates(
             locationManager,

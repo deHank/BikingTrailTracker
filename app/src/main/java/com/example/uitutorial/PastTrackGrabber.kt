@@ -43,15 +43,25 @@ class PastTrackGrabber {
         val messageListner = MesgListener { mesg ->
 
             if(mesg.hasField(RecordMesg.PositionLatFieldNum) && mesg.hasField(RecordMesg.PositionLongFieldNum)) {
-                val latitudeSemicircles = mesg?.getFieldValue(RecordMesg.PositionLatFieldNum) as Int
-                val longitudeSemicircles = mesg?.getFieldValue(RecordMesg.PositionLongFieldNum) as Int
+                val latitudeSemicircles: Number = mesg?.getFieldValue(RecordMesg.PositionLatFieldNum) as Number
+                val longitudeSemicircles: Number = mesg?.getFieldValue(RecordMesg.PositionLongFieldNum) as Number
                 //points.add(Pair(latitudeSemicircles!!, longitudeSemicircles!!))
                 //Toast.makeText(context, "Latitude: $latitudeSemicircles, Longitude: $longitudeSemicircles", Toast.LENGTH_SHORT).show()
 
                 Log.d(TAG, "Latitude: $latitudeSemicircles, Longitude: $longitudeSemicircles")
-                val convertedLatitude = SemicirclesConverter.semicirclesToDegrees(latitudeSemicircles!!)
-                val convertedLongitude = SemicirclesConverter.semicirclesToDegrees(longitudeSemicircles!!)
-                points.add(Pair(convertedLatitude, convertedLongitude))
+                val latitudeDegrees = SemicirclesConverter.semicirclesToDegrees(latitudeSemicircles.toInt())
+                val longitudeDegrees = SemicirclesConverter.semicirclesToDegrees(
+                    longitudeSemicircles.toInt()
+                )
+                if ((latitudeDegrees != 0.0 || longitudeDegrees != 0.0) && // Exclude (0,0)
+                    latitudeDegrees >= -90.0f && latitudeDegrees <= 90.0f &&
+                    longitudeDegrees >= -180.0f && longitudeDegrees <= 180.0f) {
+
+                    points.add(Pair(latitudeDegrees.toDouble(), longitudeDegrees.toDouble()))
+                     Log.d(TAG, "Extracted valid point: Lat $latitudeDegrees, Lon $longitudeDegrees")
+                } else {
+                    Log.w(TAG, "Filtered out invalid/out-of-range coordinate: Lat $latitudeDegrees, Lon $longitudeDegrees (semicircles: $latitudeSemicircles, $longitudeSemicircles)")
+                }
             }
         }
         val decode = Decode()
