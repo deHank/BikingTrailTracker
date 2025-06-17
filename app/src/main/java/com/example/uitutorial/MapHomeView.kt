@@ -34,7 +34,7 @@ import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
 
 @Composable
-fun MapHomeView(mapViewModel: MapView?, mapViewModel1: MapViewModel) {
+fun MapHomeView(mapViewModel1: MapViewModel) {
 
     val context = LocalContext.current
 
@@ -63,7 +63,6 @@ fun MapHomeView(mapViewModel: MapView?, mapViewModel1: MapViewModel) {
 
 
     val currentLocation by mapViewModel1.currentLocation.collectAsState()
-    var selectedItem by remember { mutableStateOf(0) }
     Box(modifier = Modifier.fillMaxSize()) {
 
         AndroidView(modifier = Modifier.fillMaxSize(), factory = { mapView}, update = { view ->

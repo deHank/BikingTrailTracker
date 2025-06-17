@@ -2,7 +2,6 @@ package com.example.uitutorial
 
 import android.Manifest
 import android.annotation.SuppressLint
-import android.content.Context
 import android.content.pm.PackageManager
 import android.location.LocationManager
 import android.os.Build
@@ -256,7 +255,7 @@ class MainActivity : ComponentActivity() {
      * location permissions have been successfully granted.
      */
     private fun setupCoreAppComponents() {
-        val locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        val locationManager = getSystemService(LOCATION_SERVICE) as LocationManager
         // Ensure components are only initialized once.
         if (map == null) {
             // Initialize MapView
@@ -418,7 +417,7 @@ fun onMapChanged(mapView: MapView) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BottomAppBarExample(navController: NavHostController, map: MapView?, mapViewModel: MapViewModel) { // Marked map and trackWriter as nullable
-    val context = LocalContext.current
+    LocalContext.current
     Scaffold(
         topBar = {
             TopAppBar(
@@ -475,7 +474,7 @@ fun BottomAppBarExample(navController: NavHostController, map: MapView?, mapView
 
                             // It's generally not recommended to pass UI components (like MapView) to Workers directly.
                             // Instead, pass necessary data (e.g., activity ID, parameters for tracking).
-                            val trackWriterWorker = OneTimeWorkRequestBuilder<TrackWriterWorker>()
+                            OneTimeWorkRequestBuilder<TrackWriterWorker>()
                                 .setConstraints(constraints)
                                 .setInputData(Data.Builder().putString("mapViewKey", "mapViewInstance").build())
                                 .build()
@@ -499,7 +498,7 @@ fun BottomAppBarExample(navController: NavHostController, map: MapView?, mapView
                 .clip(shape = RoundedCornerShape(20.dp)),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            MapHomeView(map, mapViewModel)
+            MapHomeView(mapViewModel)
         }
     }
 }

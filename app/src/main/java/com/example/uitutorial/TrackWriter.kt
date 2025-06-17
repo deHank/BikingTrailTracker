@@ -91,9 +91,9 @@ class TrackWriter(private var context: Context, private val locationManager: Loc
         val productID = 12345
 
         val file = File("testLocation")
-        var FileOutputStream = FileOutputStream(file)
+        FileOutputStream(file)
         var fileEncoder = FileEncoder(file, Fit.ProtocolVersion.V2_0)
-        var fileName = "test.fit"
+        "test.fit"
         //date in format for .fit file
         var date = DateTime(System.currentTimeMillis())
 
@@ -115,17 +115,9 @@ class TrackWriter(private var context: Context, private val locationManager: Loc
 
         // --- Step 3: Record Messages (The core time-series data for the track) ---
         // Iterate through your collected Location data and create a RecordMesg for each.
-        var cumulativeDistance = 0.0F
-        var previousLocation: Location? = null
-        var totalTimerTime = 0.0F
-        var totalElapsedTime = 0.0F
 
         // Metrics for Lap/Session summary
-        var minHeartRate: Short = 255
-        var maxHeartRate: Short = 0
-        var minSpeed: Float = Float.MAX_VALUE
-        var maxSpeed: Float = 0.0F
-        var totalCalories: Int = 0 // Needs proper calculation in a real app
+        Float.MAX_VALUE
 
     }
 
@@ -165,7 +157,7 @@ class TrackWriter(private var context: Context, private val locationManager: Loc
         val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
         val fileName = "activity_$timestamp.fit"
         val file = File(context.filesDir,"testPath")
-        val fitFileEncoder = FileEncoder(file, Fit.ProtocolVersion.V2_0)
+        FileEncoder(file, Fit.ProtocolVersion.V2_0)
 
         fitFileWriter.startNewFitFile(fileName, com.garmin.fit.Sport.RUNNING)
         // Example: assume running sport

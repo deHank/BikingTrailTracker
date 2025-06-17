@@ -33,7 +33,7 @@ import kotlinx.coroutines.delay
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CurrentTrackViewerActivity(navController: NavHostController, trackWriter: TrackWriter) {
-    val context = LocalContext.current
+    LocalContext.current
     // State to hold the current speed
     val currentSpeedState = remember { mutableStateOf(trackWriter.getCurrentSpeed()) }
 

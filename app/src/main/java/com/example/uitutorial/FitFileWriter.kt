@@ -55,7 +55,7 @@ class FitFileWriter(private val context: Context) {
 
         try {
             fileOutputStream = FileOutputStream(file)
-            fileEncoder = com.garmin.fit.FileEncoder(file, com.garmin.fit.Fit.ProtocolVersion.V2_0)
+            fileEncoder = com.garmin.fit.FileEncoder(file, Fit.ProtocolVersion.V2_0)
 
             // Reset cumulative metrics for a new session
             cumulativeDistance = 0.0F
@@ -72,11 +72,11 @@ class FitFileWriter(private val context: Context) {
             // --- FileId Message (Mandatory first message) ---
             fileCreationTime = com.garmin.fit.DateTime(Date())
             val fileIdMesg = com.garmin.fit.FileIdMesg()
-            fileIdMesg.setType(com.garmin.fit.File.ACTIVITY)
-            fileIdMesg.setManufacturer(MANUFACTURER_ID)
-            fileIdMesg.setProduct(PRODUCT_ID)
-            fileIdMesg.setSerialNumber(System.currentTimeMillis()) // Use current time as a non-unique serial
-            fileIdMesg.setTimeCreated(fileCreationTime)
+            fileIdMesg.type = com.garmin.fit.File.ACTIVITY
+            fileIdMesg.manufacturer = MANUFACTURER_ID
+            fileIdMesg.product = PRODUCT_ID
+            fileIdMesg.serialNumber = System.currentTimeMillis() // Use current time as a non-unique serial
+            fileIdMesg.timeCreated = fileCreationTime
             fileEncoder?.write(fileIdMesg)
             Log.d(TAG, "FIT file writing started: FileIdMesg written.")
 
@@ -84,9 +84,9 @@ class FitFileWriter(private val context: Context) {
             // Timestamp for this event will be the first location's timestamp or file creation time if no locations yet.
             // Will use first location's timestamp in addRecord for accuracy. For now, use file creation time.
             val eventMesgStart = com.garmin.fit.EventMesg()
-            eventMesgStart.setTimestamp(fileCreationTime)
-            eventMesgStart.setEvent(com.garmin.fit.Event.TIMER)
-            eventMesgStart.setEventType(com.garmin.fit.EventType.START)
+            eventMesgStart.timestamp = fileCreationTime
+            eventMesgStart.event = com.garmin.fit.Event.TIMER
+            eventMesgStart.eventType = com.garmin.fit.EventType.START
             fileEncoder?.write(eventMesgStart)
             Log.d(TAG, "Event.TIMER START written.")
 
@@ -129,17 +129,17 @@ class FitFileWriter(private val context: Context) {
         }
 
         val recordMesg = com.garmin.fit.RecordMesg()
-        recordMesg.setTimestamp(com.garmin.fit.DateTime(Date()))
+        recordMesg.timestamp = com.garmin.fit.DateTime(Date())
 
         // GPS Data
         //recordMesg.setPositionLat(com.garmin.fit.Fit.floatToSemicircles(location.latitude.toFloat()))
         //recordMesg.setPositionLong(com.garmin.fit.Fit.floatToSemicircles(location.longitude.toFloat()))
         if (location.hasAltitude()) {
-            recordMesg.setAltitude(location.altitude.toFloat())
+            recordMesg.altitude = location.altitude.toFloat()
         }
 
         // Speed and Distance calculation
-        recordMesg.setSpeed(location.speed) // m/s
+        recordMesg.speed = location.speed // m/s
         if (location.speed > maxSpeed) maxSpeed = location.speed
         if (location.speed < minSpeed) minSpeed = location.speed
         //storing the latitude and longitude (locations)
@@ -160,7 +160,7 @@ class FitFileWriter(private val context: Context) {
                 totalTimerTime += timeDiff.toFloat()
             }
         }
-        recordMesg.setDistance(cumulativeDistance)
+        recordMesg.distance = cumulativeDistance
 
         // Sensor Data (use provided, else dummy/null)
         //val currentHr = heartRate ?: (100 + Random().nextInt(60)).toShort()
@@ -200,49 +200,49 @@ class FitFileWriter(private val context: Context) {
 
         // --- Lap Message (Assuming one lap for the entire activity for simplicity) ---
         val lapMesg = com.garmin.fit.LapMesg()
-        lapMesg.setStartTime(firstLocationTime ?: fileCreationTime)
-        lapMesg.setTimestamp(lastLocationTime)
-        lapMesg.setTotalElapsedTime(totalElapsedTime)
-        lapMesg.setTotalTimerTime(totalTimerTime)
-        lapMesg.setTotalDistance(cumulativeDistance)
-        lapMesg.setTotalCalories(totalCalories)
-        lapMesg.setSport(com.garmin.fit.Sport.GENERIC) // Or the sport passed in startNewFitFile
-        lapMesg.setAvgHeartRate(if (totalTimerTime > 0) (totalCalories / totalTimerTime).toInt().toShort() else 0) // Very rough avg HR calc
-        lapMesg.setMaxHeartRate(maxHeartRate)
-        lapMesg.setAvgSpeed(if (totalTimerTime > 0) cumulativeDistance / totalTimerTime else 0F)
-        lapMesg.setMaxSpeed(maxSpeed)
-        lapMesg.setEvent(com.garmin.fit.Event.LAP)
-        lapMesg.setEventType(com.garmin.fit.EventType.STOP)
+        lapMesg.startTime = firstLocationTime ?: fileCreationTime
+        lapMesg.timestamp = lastLocationTime
+        lapMesg.totalElapsedTime = totalElapsedTime
+        lapMesg.totalTimerTime = totalTimerTime
+        lapMesg.totalDistance = cumulativeDistance
+        lapMesg.totalCalories = totalCalories
+        lapMesg.sport = com.garmin.fit.Sport.GENERIC // Or the sport passed in startNewFitFile
+        lapMesg.avgHeartRate = if (totalTimerTime > 0) (totalCalories / totalTimerTime).toInt().toShort() else 0 // Very rough avg HR calc
+        lapMesg.maxHeartRate = maxHeartRate
+        lapMesg.avgSpeed = if (totalTimerTime > 0) cumulativeDistance / totalTimerTime else 0F
+        lapMesg.maxSpeed = maxSpeed
+        lapMesg.event = com.garmin.fit.Event.LAP
+        lapMesg.eventType = com.garmin.fit.EventType.STOP
         fileEncoder?.write(lapMesg)
         Log.d(TAG, "LapMesg written.")
 
         // --- Session Message ---
         val sessionMesg = com.garmin.fit.SessionMesg()
-        sessionMesg.setStartTime(firstLocationTime ?: fileCreationTime)
-        sessionMesg.setTimestamp(lastLocationTime)
-        sessionMesg.setTotalElapsedTime(totalElapsedTime)
-        sessionMesg.setTotalTimerTime(totalTimerTime)
-        sessionMesg.setTotalDistance(cumulativeDistance)
-        sessionMesg.setTotalCalories(totalCalories)
-        sessionMesg.setSport(com.garmin.fit.Sport.GENERIC) // Or the sport passed in startNewFitFile
-        sessionMesg.setSubSport(com.garmin.fit.SubSport.GENERIC)
-        sessionMesg.setAvgHeartRate(if (totalTimerTime > 0) (totalCalories / totalTimerTime).toInt()
-            .toShort() else 0) // Very rough avg HR calc
-        sessionMesg.setMaxHeartRate(maxHeartRate)
-        sessionMesg.setAvgSpeed(if (totalTimerTime > 0) cumulativeDistance / totalTimerTime else 0F)
-        sessionMesg.setMaxSpeed(maxSpeed)
-        sessionMesg.setNumLaps(1) // Assuming one lap
-        sessionMesg.setFirstLapIndex(0)
-        sessionMesg.setEvent(com.garmin.fit.Event.SESSION)
-        sessionMesg.setEventType(com.garmin.fit.EventType.STOP)
+        sessionMesg.startTime = firstLocationTime ?: fileCreationTime
+        sessionMesg.timestamp = lastLocationTime
+        sessionMesg.totalElapsedTime = totalElapsedTime
+        sessionMesg.totalTimerTime = totalTimerTime
+        sessionMesg.totalDistance = cumulativeDistance
+        sessionMesg.totalCalories = totalCalories
+        sessionMesg.sport = com.garmin.fit.Sport.GENERIC // Or the sport passed in startNewFitFile
+        sessionMesg.subSport = com.garmin.fit.SubSport.GENERIC
+        sessionMesg.avgHeartRate = if (totalTimerTime > 0) (totalCalories / totalTimerTime).toInt()
+            .toShort() else 0 // Very rough avg HR calc
+        sessionMesg.maxHeartRate = maxHeartRate
+        sessionMesg.avgSpeed = if (totalTimerTime > 0) cumulativeDistance / totalTimerTime else 0F
+        sessionMesg.maxSpeed = maxSpeed
+        sessionMesg.numLaps = 1 // Assuming one lap
+        sessionMesg.firstLapIndex = 0
+        sessionMesg.event = com.garmin.fit.Event.SESSION
+        sessionMesg.eventType = com.garmin.fit.EventType.STOP
         fileEncoder?.write(sessionMesg)
         Log.d(TAG, "SessionMesg written.")
 
         // --- Event Message (Timer Stop) ---
         val eventMesgStop = com.garmin.fit.EventMesg()
-        eventMesgStop.setTimestamp(lastLocationTime)
-        eventMesgStop.setEvent(com.garmin.fit.Event.TIMER)
-        eventMesgStop.setEventType(com.garmin.fit.EventType.STOP)
+        eventMesgStop.timestamp = lastLocationTime
+        eventMesgStop.event = com.garmin.fit.Event.TIMER
+        eventMesgStop.eventType = com.garmin.fit.EventType.STOP
         fileEncoder?.write(eventMesgStop)
         Log.d(TAG, "Event.TIMER STOP written.")
 

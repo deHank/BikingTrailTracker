@@ -18,10 +18,6 @@ class aLocationListener : LocationListener {
         Log.d("LocationListener", "location was $locations")
     }
 
-    override fun onFlushComplete(requestCode: Int) {
-        super.onFlushComplete(requestCode)
-    }
-
     override fun onStatusChanged(provider: String, status: Int, extras: Bundle) {
         Log.d("Location Listener", "status changed")
         super.onStatusChanged(provider, status, extras)
@@ -32,7 +28,4 @@ class aLocationListener : LocationListener {
         Log.d("Location Listener", "provider enabled")
     }
 
-    override fun onProviderDisabled(provider: String) {
-        super.onProviderDisabled(provider)
-    }
 }

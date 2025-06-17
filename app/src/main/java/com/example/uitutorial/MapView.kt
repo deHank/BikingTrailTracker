@@ -1,5 +1,3 @@
 package com.example.uitutorial
 
-class MapView {
-
-}
+class MapView

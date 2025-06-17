@@ -5,7 +5,7 @@ plugins {
 
 android {
     namespace = "com.example.uitutorial"
-    compileSdk = 34
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.example.uitutorial"
@@ -69,6 +69,8 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.work.runtime.ktx)
     implementation("com.garmin:fit:21.171.0")
+    implementation(libs.androidx.foundation.layout)
+    implementation(libs.ui)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
