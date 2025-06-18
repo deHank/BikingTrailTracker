@@ -74,8 +74,12 @@ class PastTrackGrabber {
         decode.addListener(messageListner)
         var messageBroadcaster = MesgBroadcaster()
         messageBroadcaster.addListener(messageListner)
-        messageBroadcaster.run(fileInputStream)
-
+        try {
+            messageBroadcaster.run(fileInputStream)
+        }
+        catch (err: Exception) {
+            Log.e(TAG, "Error reading FIT file: ${err.message}")
+        }
         return points
     }
     fun getPointsFromFile(context: Context, fileName: String): List<IGeoPoint> {
@@ -121,8 +125,11 @@ class PastTrackGrabber {
         decode.addListener(messageListner)
         var messageBroadcaster = MesgBroadcaster()
         messageBroadcaster.addListener(messageListner)
-        messageBroadcaster.run(fileInputStream)
-
+        try {
+            messageBroadcaster.run(fileInputStream)
+        }catch (err: Exception) {
+            Log.e(TAG, "Error reading FIT file: ${err.message}")
+        }
         return points
     }
 

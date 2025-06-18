@@ -36,6 +36,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.navigation.NavHostController
+import org.osmdroid.bonuspack.kml.KmlTrack
 import org.osmdroid.config.Configuration.getInstance
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Polygon
@@ -195,12 +196,12 @@ fun ClickableItem(file: File, pastTrackGrabber: PastTrackGrabber, onClick: () ->
                         val boundingBox = pastTrackGrabber.computeArea(context, geoPoints)
                         val line = Polyline()
                         line.setPoints(geoPoints)
+
                         overlays.add(line);
 
-                        val polygon = Polygon()
-                        polygon.points = geoPoints
-                        overlays.add(polygon)
-                            addOnFirstLayoutListener(onFirstLayoutListener)
+
+
+                        addOnFirstLayoutListener(onFirstLayoutListener)
                         //zoomToBoundingBox(boundingBox, true)
                         //z = 16.0f
                         //invalidate()
