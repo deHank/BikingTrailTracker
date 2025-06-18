@@ -220,7 +220,7 @@ class MainActivity : ComponentActivity() {
                                 }
                                 composable("pastTracksViewer") {
                                     map?.let { mapInstance ->
-                                        PastTracksViewerActivity(navController, mapInstance, pastTrackGrabber)
+                                        PastTracksViewerActivity(navController, pastTrackGrabber)
                                     } ?: Text("Error: MapView not initialized.", modifier = Modifier.padding(16.dp).align(Alignment.Center))
                                 }
                                 composable("CurrentTrackViewerActivity"){

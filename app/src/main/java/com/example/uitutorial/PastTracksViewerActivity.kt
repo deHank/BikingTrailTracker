@@ -2,6 +2,7 @@ package com.example.uitutorial
 
 import android.preference.PreferenceManager
 import android.util.Log
+import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import androidx.compose.foundation.clickable
@@ -37,13 +38,17 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.navigation.NavHostController
 import org.osmdroid.config.Configuration.getInstance
 import org.osmdroid.views.MapView
+import org.osmdroid.views.overlay.Polygon
+import org.osmdroid.views.overlay.Polyline
+import org.osmdroid.views.overlay.simplefastpoint.SimpleFastPointOverlay
+import org.osmdroid.views.overlay.simplefastpoint.SimpleFastPointOverlayOptions
+import org.osmdroid.views.overlay.simplefastpoint.SimplePointTheme
 import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PastTracksViewerActivity(
     navController: NavHostController,
-    map: MapView?,
     pastTrackGrabber: PastTrackGrabber
 ) {
 
@@ -102,8 +107,8 @@ fun PastTracksViewerActivity(
             {
                 val fileList = pastTrackGrabber.getFileList(context = context)
                 items(fileList) { file ->
-                    // Each item is contained within its own clickable block
-                    ClickableItem(file = file) {
+                    //Each item is contained within its own clickable block
+                    ClickableItem(file = file, pastTrackGrabber = pastTrackGrabber) {
                         Log.d("ClickableItem", "You clicked on file: ${file.name}")
                         pastTrackGrabber.getPointsFromFile(context, file.name)
                     }
@@ -114,8 +119,11 @@ fun PastTracksViewerActivity(
 }
 
 @Composable
-fun ClickableItem(file: File, onClick: () -> Unit) {
+fun ClickableItem(file: File, pastTrackGrabber: PastTrackGrabber, onClick: () -> Unit) {
     val context = LocalContext.current
+
+    var points = pastTrackGrabber.getPointsFromFile(context, file.name)
+    var geoPoints = pastTrackGrabber.getGeoPointsFromFile(context, file.name)
     // Each item will now contain its own MapView (WARNING: PERFORMANCE RISK)
     val itemMapView = remember { MapView(context) }
     "ClickableItemMap"
@@ -132,6 +140,25 @@ fun ClickableItem(file: File, onClick: () -> Unit) {
         }
     }
 
+    var onFirstLayoutListener = object : MapView.OnFirstLayoutListener {
+
+        override fun onFirstLayout(
+            v: View?,
+            left: Int,
+            top: Int,
+            right: Int,
+            bottom: Int
+        ) {
+
+
+
+            val line = Polyline()
+            line.setPoints(geoPoints)
+
+            itemMapView.zoomToBoundingBox(line.bounds, false, 50)
+        }
+    }
+
     Box(
         modifier = Modifier
             .padding(16.dp)
@@ -139,6 +166,7 @@ fun ClickableItem(file: File, onClick: () -> Unit) {
             .clickable(onClick = onClick) // Original click to go to main map
     ) {
         Column {
+
             Text(text = file.name, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(bottom = 8.dp))
             // Embed the MapView
             AndroidView(
@@ -154,7 +182,34 @@ fun ClickableItem(file: File, onClick: () -> Unit) {
                             ViewGroup.LayoutParams.MATCH_PARENT,
                             ViewGroup.LayoutParams.MATCH_PARENT
                         )
+                        val pt = SimplePointTheme(points, true)
+
+                        //val textStyle = Paint()
+
+                        //textStyle = 16f
+                        val opt = SimpleFastPointOverlayOptions.getDefaultStyle().setAlgorithm(
+                            SimpleFastPointOverlayOptions.RenderingAlgorithm.MAXIMUM_OPTIMIZATION)
+                        val sfpo = SimpleFastPointOverlay(pt, opt)
+
+                        overlays.add(sfpo)
+                        val boundingBox = pastTrackGrabber.computeArea(context, geoPoints)
+                        val line = Polyline()
+                        line.setPoints(geoPoints)
+                        overlays.add(line);
+
+                        val polygon = Polygon()
+                        polygon.points = geoPoints
+                        overlays.add(polygon)
+                            addOnFirstLayoutListener(onFirstLayoutListener)
+                        //zoomToBoundingBox(boundingBox, true)
+                        //z = 16.0f
+                        //invalidate()
                     }
+
+
+
+
+
                 },
                 update = { view ->
                     // Optional: Update logic here if needed, but DisposableEffect handles drawing
