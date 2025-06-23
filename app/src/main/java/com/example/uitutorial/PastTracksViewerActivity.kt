@@ -62,7 +62,7 @@ fun PastTracksViewerActivity(
                     titleContentColor = MaterialTheme.colorScheme.primary,
                 ),
                 title = {
-                    Text("Top app bar")
+                    Text("Past Activities")
                 }
             )
         },
@@ -72,7 +72,7 @@ fun PastTracksViewerActivity(
                 modifier = Modifier
                     .clip(shape = RoundedCornerShape(20.dp)),
                 actions = {
-                    IconButton(onClick = { /* do something */ }) {
+                    IconButton(onClick = { navController.navigate("main") }) {
                         Icon(Icons.Filled.Home, contentDescription = "Localized description")
                     }
                     IconButton(onClick = { /* do something */ }) {
@@ -106,7 +106,8 @@ fun PastTracksViewerActivity(
             // Display a list of clickable items using LazyColumn
             LazyColumn()
             {
-                val fileList = pastTrackGrabber.getFileList(context = context).reversed()
+
+                val fileList = pastTrackGrabber.getFileList(context = context).reversed().take(5)
                 items(fileList) { file ->
 
                     //Each item is contained within its own clickable block
@@ -170,7 +171,9 @@ fun ClickableItem(file: File, pastTrackGrabber: PastTrackGrabber, onClick: () ->
     ) {
         Column {
             var fileName = pastTrackGrabber.convertFilenameToReadableDate(file.name)
-            Text(text = fileName, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(bottom = 8.dp))
+            //Text(text = "Activity",  style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(bottom = 8.dp))
+            Text(text = "Activity on " + fileName, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(bottom = 6.dp))
+
             // Embed the MapView
             AndroidView(
                 modifier = Modifier

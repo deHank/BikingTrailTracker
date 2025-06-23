@@ -32,6 +32,9 @@ class MapViewModel(application: Application, private val trackWriter: TrackWrite
     private val _isFollowLocationEnabled = MutableStateFlow(true) // Default to true
     val isFollowLocationEnabled: StateFlow<Boolean> = _isFollowLocationEnabled.asStateFlow()
 
+    val recordedLocationsFlow: kotlinx.coroutines.flow.StateFlow<List<GeoPoint>> = trackWriter.recordedLocationsFlow
+
+
     init {
         // Observing Location Updates from GPSHandler
         viewModelScope.launch {

@@ -1,5 +1,7 @@
 package com.example.uitutorial
 
+import android.content.ContentValues.TAG
+import android.preference.PreferenceManager
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.layout.Box
@@ -13,6 +15,7 @@ import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LargeFloatingActionButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -25,9 +28,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import org.osmdroid.config.Configuration
+import org.osmdroid.config.Configuration.getInstance
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
+import org.osmdroid.views.overlay.Polyline
 import org.osmdroid.views.overlay.compass.CompassOverlay
 import org.osmdroid.views.overlay.gestures.RotationGestureOverlay
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
@@ -37,6 +42,7 @@ import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
 fun MapHomeView(mapViewModel1: MapViewModel) {
 
     val context = LocalContext.current
+    val liveTrackLocations by mapViewModel1.recordedLocationsFlow.collectAsState() // Observe live recorded locations for drawing
 
     val mapView = remember {
 
@@ -64,6 +70,23 @@ fun MapHomeView(mapViewModel1: MapViewModel) {
 
     val currentLocation by mapViewModel1.currentLocation.collectAsState()
     Box(modifier = Modifier.fillMaxSize()) {
+        DisposableEffect(mapView, liveTrackLocations) {
+            getInstance().load(context, PreferenceManager.getDefaultSharedPreferences(context))
+            if(liveTrackLocations.isNotEmpty()){
+                val polyLine = Polyline(mapView)
+                polyLine.setPoints(liveTrackLocations)
+                mapView.overlays.add(polyLine)
+                mapView.invalidate()
+                Log.d(TAG, "Drawing live track polyline with ${liveTrackLocations.size} points.")
+            }
+            else {
+                mapView.invalidate()
+            }
+            onDispose {
+                mapView?.overlays?.removeAll(mapView.overlays.filterIsInstance<Polyline>())
+                mapView?.invalidate()
+            }
+        }
 
         AndroidView(modifier = Modifier.fillMaxSize(), factory = { mapView}, update = { view ->
             // This block is for updates that need to be pushed from Compose state to the View.
