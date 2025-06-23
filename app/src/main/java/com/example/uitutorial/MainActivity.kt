@@ -123,6 +123,8 @@ class MainActivity : ComponentActivity() {
     private var permissionCheckCompleted: MutableState<Boolean> = mutableStateOf(false)
     private var pastTrackGrabber = PastTrackGrabber()
 
+    private var mapPreferencesRepository: MapPreferencesRepository? = null
+
     // Activity Result Launcher for requesting multiple permissions.
     private val requestPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
@@ -150,7 +152,7 @@ class MainActivity : ComponentActivity() {
                     // Ensure trackWriter is not null here. setupCoreAppComponents guarantees it.
                     // This factory will only be called after setupCoreAppComponents.
                     @Suppress("UNCHECKED_CAST")
-                    return MapViewModel(application, trackWriter!!) as T
+                    return MapViewModel(application, trackWriter!!, mapPreferencesRepository!!) as T
                 }
                 throw IllegalArgumentException("Unknown ViewModel class")
             }
@@ -270,6 +272,7 @@ class MainActivity : ComponentActivity() {
             // Call the actual logic for going to the current location.
             // This will likely involve a LocationManager or FusedLocationProviderClient.
             goToCurrentLocation()
+            mapPreferencesRepository = MapPreferencesRepository(applicationContext)
         }
         trackWriter = TrackWriter(context = applicationContext, locationManager)
     }

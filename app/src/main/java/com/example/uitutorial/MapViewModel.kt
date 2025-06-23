@@ -14,7 +14,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import org.osmdroid.util.GeoPoint
 
-class MapViewModel(application: Application, private val trackWriter: TrackWriter) : AndroidViewModel(application) {
+class MapViewModel(application: Application, private val trackWriter: TrackWriter, private val mapPreferencesRepository: MapPreferencesRepository) : AndroidViewModel(application) {
     //private val gpsHandler = GPSHandler(application)
 
     // LiveData for the current location to be displayed on the map and for zooming
@@ -38,7 +38,7 @@ class MapViewModel(application: Application, private val trackWriter: TrackWrite
     // StateFlow to hold the last saved map state (center and zoom)
     private val _lastSavedMapState = kotlinx.coroutines.flow.MutableStateFlow<GeoPoint?>(null)
     val lastSavedMapState: kotlinx.coroutines.flow.StateFlow<GeoPoint?> = _lastSavedMapState
-    private val mapPreferencesRepository = MapPreferencesRepository(context = application.applicationContext)
+    //private val mapPreferencesRepository = MapPreferencesRepository(context = application.applicationContext)
 
     init {
         // Observing Location Updates from GPSHandler
