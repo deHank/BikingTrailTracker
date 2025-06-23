@@ -43,10 +43,14 @@ fun MapHomeView(mapViewModel1: MapViewModel) {
 
     val context = LocalContext.current
     val liveTrackLocations by mapViewModel1.recordedLocationsFlow.collectAsState() // Observe live recorded locations for drawing
-
+    val lastMapSavedState by mapViewModel1.lastSavedMapState.collectAsState()
     val mapView = remember {
 
         MapView(context).apply {
+
+            if(lastMapSavedState != null){
+                controller.setCenter(mapViewModel1.lastSavedMapState.value)
+            }
             Configuration.getInstance().load(context, context.getSharedPreferences("osmdroid", 0))
 
             setTileSource(TileSourceFactory.MAPNIK)
@@ -78,6 +82,7 @@ fun MapHomeView(mapViewModel1: MapViewModel) {
                 mapView.overlays.add(polyLine)
                 mapView.invalidate()
                 Log.d(TAG, "Drawing live track polyline with ${liveTrackLocations.size} points.")
+                //mapViewModel1.saveLastMapState(liveTrackLocations.getLast())
             }
             else {
                 mapView.invalidate()
@@ -107,6 +112,7 @@ fun MapHomeView(mapViewModel1: MapViewModel) {
                     mapView.controller.setZoom(18)
                     var locationOverlay = mapView.overlays[2] as MyLocationNewOverlay
                     locationOverlay.enableFollowLocation()
+
                     mapView.invalidate() // Redraw the map
                     Log.d("MapHomeView", "Map centered via button to: ${geoPoint.latitude}, ${geoPoint.longitude}")
                 } ?: run {

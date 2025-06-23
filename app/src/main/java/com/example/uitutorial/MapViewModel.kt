@@ -69,10 +69,10 @@ class MapViewModel(application: Application, private val trackWriter: TrackWrite
      * @param geoPoint The current center GeoPoint of the map.
      * @param zoomLevel The current zoom level of the map.
      */
-    fun saveLastMapState(geoPoint: GeoPoint, zoomLevel: Double) {
+    fun saveLastMapState(geoPoint: GeoPoint) {
         viewModelScope.launch {
-            mapPreferencesRepository.saveMapState(geoPoint, zoomLevel)
-            Log.d(TAG, "Map state saved: ${geoPoint.latitude}, ${geoPoint.longitude}, zoom ${zoomLevel}")
+            mapPreferencesRepository.saveMapState(geoPoint)
+            Log.d(TAG, "Map state saved: ${geoPoint.latitude}, ${geoPoint.longitude}")
         }
     }
 
@@ -91,6 +91,8 @@ class MapViewModel(application: Application, private val trackWriter: TrackWrite
     fun startLocationUpdates() {
         viewModelScope.launch {
             val location = trackWriter.getCurrentLocation()
+            val geoPoint = GeoPoint(location!!.latitude, location.longitude)
+            mapPreferencesRepository.saveMapState(geoPoint)
             if (location != null) {
                 _currentLocation.value = location
                 currentLocation.value = location

@@ -37,13 +37,13 @@ class MapPreferencesRepository(private val context: Context) {
      * @param geoPoint The current center GeoPoint of the map.
      * @param zoomLevel The current zoom level of the map.
      */
-    suspend fun saveMapState(geoPoint: GeoPoint, zoomLevel: Double) {
+    suspend fun saveMapState(geoPoint: GeoPoint) {
         try {
             context.mapDataStore.edit { preferences ->
                 preferences[PreferencesKeys.LAST_LATITUDE] = geoPoint.latitude
                 preferences[PreferencesKeys.LAST_LONGITUDE] = geoPoint.longitude
-                preferences[PreferencesKeys.LAST_ZOOM_LEVEL] = zoomLevel
-                Log.d(TAG, "Map state saved to DataStore: Lat ${geoPoint.latitude}, Lon ${geoPoint.longitude}, Zoom $zoomLevel")
+                //preferences[PreferencesKeys.LAST_ZOOM_LEVEL] = zoomLevel
+                Log.d(TAG, "Map state saved to DataStore: Lat ${geoPoint.latitude}, Lon ${geoPoint.longitude}")
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error saving map state to DataStore: ${e.message}", e)
