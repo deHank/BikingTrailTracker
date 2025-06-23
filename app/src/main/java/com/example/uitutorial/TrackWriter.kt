@@ -194,6 +194,9 @@ class TrackWriter(private var context: Context, private val locationManager: Loc
     fun endRecording(){
         _isRecording.value = false
         fitFileWriter.endFitFile()
+        _recordedLocationsForDrawing.clear()
+        _recordedLocationsFlow.value = emptyList<GeoPoint>()
+        _currentRecordedLocation.value = null
     }
 
     fun getCurrentDateTime(): String {
