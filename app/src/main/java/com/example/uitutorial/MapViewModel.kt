@@ -1,6 +1,7 @@
 package com.example.uitutorial
 
 import android.app.Application
+import android.content.ContentValues.TAG
 import android.location.Location
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
@@ -34,6 +35,10 @@ class MapViewModel(application: Application, private val trackWriter: TrackWrite
 
     val recordedLocationsFlow: kotlinx.coroutines.flow.StateFlow<List<GeoPoint>> = trackWriter.recordedLocationsFlow
 
+    // StateFlow to hold the last saved map state (center and zoom)
+    private val _lastSavedMapState = kotlinx.coroutines.flow.MutableStateFlow<GeoPoint?>(null)
+    val lastSavedMapState: kotlinx.coroutines.flow.StateFlow<GeoPoint?> = _lastSavedMapState
+    private val mapPreferencesRepository = MapPreferencesRepository(context = application.applicationContext)
 
     init {
         // Observing Location Updates from GPSHandler
@@ -41,6 +46,43 @@ class MapViewModel(application: Application, private val trackWriter: TrackWrite
             //gpsHandler.getCurrentLocation()
             startLocationUpdates()
         }
+    }
+
+    /**
+     * Loads the last saved map center and zoom level from preferences.
+     */
+    private fun loadLastMapState() {
+        viewModelScope.launch {
+            mapPreferencesRepository.getLastMapState().collect { state ->
+                _lastSavedMapState.value = state
+                if (state != null) {
+                    Log.d(TAG, "Loaded last map state: Lat ${state.latitude}, Lon ${state.longitude}")
+                } else {
+                    Log.d(TAG, "No last map state found in preferences.")
+                }
+            }
+        }
+    }
+
+    /**
+     * Saves the current map center and zoom level to preferences.
+     * @param geoPoint The current center GeoPoint of the map.
+     * @param zoomLevel The current zoom level of the map.
+     */
+    fun saveLastMapState(geoPoint: GeoPoint, zoomLevel: Double) {
+        viewModelScope.launch {
+            mapPreferencesRepository.saveMapState(geoPoint, zoomLevel)
+            Log.d(TAG, "Map state saved: ${geoPoint.latitude}, ${geoPoint.longitude}, zoom ${zoomLevel}")
+        }
+    }
+
+    /**
+     * Clears the internally held last saved map state.
+     * Useful after applying it to the map to prevent re-applying on recomposition.
+     */
+    fun clearLastSavedMapState() {
+        _lastSavedMapState.value = null
+        Log.d(TAG, "Cleared internal last saved map state.")
     }
 
     //function to start listening for GPS location updates

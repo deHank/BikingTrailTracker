@@ -71,6 +71,10 @@ dependencies {
     implementation("com.garmin:fit:21.171.0")
     implementation(libs.androidx.foundation.layout)
     implementation(libs.ui)
+    implementation(libs.androidx.datastore.core)
+    implementation("androidx.datastore:datastore-preferences:1.0.0")
+
+    implementation(libs.androidx.datastore.preferences.core)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
