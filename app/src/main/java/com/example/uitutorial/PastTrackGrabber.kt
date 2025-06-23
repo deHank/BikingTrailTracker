@@ -12,6 +12,9 @@ import org.osmdroid.util.BoundingBox
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.overlay.simplefastpoint.LabelledGeoPoint
 import java.io.File
+import java.text.ParseException
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 
 /* This class is used to grab a list of tracks to send to the PastTracksViewerActivity */
@@ -29,6 +32,45 @@ class PastTrackGrabber {
         }
         Log.d("PastTracksViewer", "files dir is " + tracksDir.canonicalPath)
         return tracksDir.listFiles()?.toList() ?: emptyList()
+    }
+
+    /**
+     * Converts a filename in "activity_YYYYMMDD_HHMMSS.fit" format to a readable date string.
+     *
+     * @param fileName The input filename.
+     * @param outputPattern The desired output date format (e.g., "MMM dd, yyyy HH:mm:ss").
+     * @return A formatted date string, or the original filename if parsing fails.
+     */
+    fun convertFilenameToReadableDate(fileName: String, outputPattern: String = "MMM dd, yyyy HH:mm"): String {
+        // Regex to extract the timestamp part "YYYYMMDD_HHMMSS"
+        val regex = "activity_(\\d{8}_\\d{6})\\.fit".toRegex()
+        val matchResult = regex.find(fileName)
+
+        val timestampString = matchResult?.groups?.get(1)?.value
+
+        if (timestampString == null) {
+            Log.w(TAG, "Filename does not match expected pattern: $fileName")
+            return fileName // Return original if format doesn't match
+        }
+
+        val inputFormat = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault())
+        val outputFormat = SimpleDateFormat(outputPattern, Locale.getDefault())
+
+        return try {
+            val date = inputFormat.parse(timestampString)
+            if (date != null) {
+                outputFormat.format(date)
+            } else {
+                Log.e(TAG, "Failed to parse timestamp string: $timestampString")
+                fileName
+            }
+        } catch (e: ParseException) {
+            Log.e(TAG, "Error parsing date from filename: $fileName - ${e.message}")
+            fileName // Return original on parse error
+        } catch (e: Exception) {
+            Log.e(TAG, "Unexpected error in date conversion: $fileName - ${e.message}")
+            fileName
+        }
     }
 
     fun getGeoPointsFromFile(context: Context, fileName: String): List<GeoPoint> {

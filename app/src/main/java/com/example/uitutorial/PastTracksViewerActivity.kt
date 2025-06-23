@@ -106,8 +106,9 @@ fun PastTracksViewerActivity(
             // Display a list of clickable items using LazyColumn
             LazyColumn()
             {
-                val fileList = pastTrackGrabber.getFileList(context = context)
+                val fileList = pastTrackGrabber.getFileList(context = context).reversed()
                 items(fileList) { file ->
+
                     //Each item is contained within its own clickable block
                     ClickableItem(file = file, pastTrackGrabber = pastTrackGrabber) {
                         Log.d("ClickableItem", "You clicked on file: ${file.name}")
@@ -134,6 +135,7 @@ fun ClickableItem(file: File, pastTrackGrabber: PastTrackGrabber, onClick: () ->
         getInstance().load(context, PreferenceManager.getDefaultSharedPreferences(context))
         itemMapView.setTileSource(org.osmdroid.tileprovider.tilesource.TileSourceFactory.MAPNIK) // Set tile source
         itemMapView.controller.setZoom(1.0) // Initial zoom
+
         onDispose {
             // Important for embedded MapViews: destroy them when no longer needed
             itemMapView.onPause()
@@ -167,8 +169,8 @@ fun ClickableItem(file: File, pastTrackGrabber: PastTrackGrabber, onClick: () ->
             .clickable(onClick = onClick) // Original click to go to main map
     ) {
         Column {
-
-            Text(text = file.name, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(bottom = 8.dp))
+            var fileName = pastTrackGrabber.convertFilenameToReadableDate(file.name)
+            Text(text = fileName, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(bottom = 8.dp))
             // Embed the MapView
             AndroidView(
                 modifier = Modifier
