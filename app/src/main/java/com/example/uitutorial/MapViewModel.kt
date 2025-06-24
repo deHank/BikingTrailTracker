@@ -34,7 +34,7 @@ class MapViewModel(application: Application, private val trackWriter: TrackWrite
     val isFollowLocationEnabled: StateFlow<Boolean> = _isFollowLocationEnabled.asStateFlow()
 
     val recordedLocationsFlow: kotlinx.coroutines.flow.StateFlow<List<GeoPoint>> = trackWriter.recordedLocationsFlow
-
+    val isRecording: kotlinx.coroutines.flow.StateFlow<Boolean> = trackWriter.isRecording
     // StateFlow to hold the last saved map state (center and zoom)
     private val _lastSavedMapState = kotlinx.coroutines.flow.MutableStateFlow<GeoPoint?>(null)
     val lastSavedMapState: kotlinx.coroutines.flow.StateFlow<GeoPoint?> = _lastSavedMapState

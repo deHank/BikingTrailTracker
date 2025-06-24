@@ -50,6 +50,7 @@ fun MapHomeView(mapViewModel1: MapViewModel) {
 
             if(lastMapSavedState != null){
                 controller.setCenter(mapViewModel1.lastSavedMapState.value)
+                setInitCenter(mapViewModel1.lastSavedMapState.value)
             }
             Configuration.getInstance().load(context, context.getSharedPreferences("osmdroid", 0))
 
@@ -71,7 +72,7 @@ fun MapHomeView(mapViewModel1: MapViewModel) {
         }
     }
 
-
+    //mapView.init(context, PreferenceManager.getDefaultSharedPreferences(context))
     val currentLocation by mapViewModel1.currentLocation.collectAsState()
     Box(modifier = Modifier.fillMaxSize()) {
         DisposableEffect(mapView, liveTrackLocations) {

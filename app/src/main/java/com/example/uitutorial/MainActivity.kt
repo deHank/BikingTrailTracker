@@ -23,8 +23,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.BottomAppBarDefaults
 import androidx.compose.material3.Button
@@ -41,6 +43,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults.topAppBarColors
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -77,23 +80,27 @@ import java.io.File
  */
 
 
-
 /**
  * Dummy Composable for the Current Track Viewer screen.
  */
 @Composable
-fun CurrentTrackViewerActivity(navController: NavHostController, trackWriter: TrackWriter?) { // TrackWriter is now nullable here too
+fun CurrentTrackViewerActivity(
+    navController: NavHostController,
+    trackWriter: TrackWriter?
+) { // TrackWriter is now nullable here too
     Column(
-        modifier = Modifier.fillMaxSize().padding(16.dp),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
         Text("Current Track Recording", style = MaterialTheme.typography.headlineMedium)
         if (trackWriter != null) {
-            Button(onClick = {  }) {
+            Button(onClick = { }) {
                 Text("Start Recording")
             }
-            Button(onClick = {  }) {
+            Button(onClick = { }) {
                 Text("Stop Recording")
             }
         } else {
@@ -104,8 +111,6 @@ fun CurrentTrackViewerActivity(navController: NavHostController, trackWriter: Tr
         }
     }
 }
-
-
 
 
 class MainActivity : ComponentActivity() {
@@ -129,7 +134,8 @@ class MainActivity : ComponentActivity() {
     private val requestPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
             val fineLocationGranted = permissions[Manifest.permission.ACCESS_FINE_LOCATION] ?: false
-            val coarseLocationGranted = permissions[Manifest.permission.ACCESS_COARSE_LOCATION] ?: false
+            val coarseLocationGranted =
+                permissions[Manifest.permission.ACCESS_COARSE_LOCATION] ?: false
 
             // Update the state based on the user's decision.
             if (fineLocationGranted || coarseLocationGranted) {
@@ -137,7 +143,11 @@ class MainActivity : ComponentActivity() {
                 isLocationPermissionGranted.value = true
                 setupCoreAppComponents() // Initialize core components now that permissions are granted.
             } else {
-                Toast.makeText(this, "Location permissions denied. App functionality is limited.", Toast.LENGTH_LONG).show()
+                Toast.makeText(
+                    this,
+                    "Location permissions denied. App functionality is limited.",
+                    Toast.LENGTH_LONG
+                ).show()
                 isLocationPermissionGranted.value = false
             }
             permissionCheckCompleted.value = true // Permission check process is now complete.
@@ -164,8 +174,15 @@ class MainActivity : ComponentActivity() {
      * This method is called once at the start of the activity to initiate the permission flow.
      */
     private fun checkAndRequestLocationPermissions() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
-            ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+        if (ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED ||
+            ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
             // Permissions are already granted.
             isLocationPermissionGranted.value = true
             permissionCheckCompleted.value = true
@@ -206,7 +223,10 @@ class MainActivity : ComponentActivity() {
                             // Permissions granted: Show the main app content (navigation graph).
                             // Ensure osmdroid configuration is loaded if not already.
                             // This might be redundant if setupCoreAppComponents() already did it.
-                            getInstance().load(LocalContext.current, PreferenceManager.getDefaultSharedPreferences(LocalContext.current))
+                            getInstance().load(
+                                LocalContext.current,
+                                PreferenceManager.getDefaultSharedPreferences(LocalContext.current)
+                            )
 
                             val navController = rememberNavController()
                             NavHost(navController, startDestination = "main") {
@@ -216,19 +236,42 @@ class MainActivity : ComponentActivity() {
                                     // a fallback Text is displayed.
                                     map?.let { mapInstance ->
                                         trackWriter?.let { trackWriterInstance ->
-                                            BottomAppBarExample(navController, mapInstance, mapViewModel = mapViewModel)
-                                        } ?: Text("Error: TrackWriter not initialized.", modifier = Modifier.align(Alignment.Center))
-                                    } ?: Text("Error: MapView not initialized.", modifier = Modifier.align(Alignment.Center))
+                                            BottomAppBarExample(
+                                                navController,
+                                                mapInstance,
+                                                mapViewModel = mapViewModel
+                                            )
+                                        } ?: Text(
+                                            "Error: TrackWriter not initialized.",
+                                            modifier = Modifier.align(Alignment.Center)
+                                        )
+                                    } ?: Text(
+                                        "Error: MapView not initialized.",
+                                        modifier = Modifier.align(Alignment.Center)
+                                    )
                                 }
                                 composable("pastTracksViewer") {
                                     map?.let { mapInstance ->
                                         PastTracksViewerActivity(navController, pastTrackGrabber)
-                                    } ?: Text("Error: MapView not initialized.", modifier = Modifier.padding(16.dp).align(Alignment.Center))
+                                    } ?: Text(
+                                        "Error: MapView not initialized.",
+                                        modifier = Modifier
+                                            .padding(16.dp)
+                                            .align(Alignment.Center)
+                                    )
                                 }
-                                composable("CurrentTrackViewerActivity"){
+                                composable("CurrentTrackViewerActivity") {
                                     trackWriter?.let { trackWriterInstance ->
-                                        CurrentTrackViewerActivity(navController , trackWriterInstance)
-                                    } ?: Text("Error: TrackWriter not initialized.", modifier = Modifier.padding(16.dp).align(Alignment.Center))
+                                        CurrentTrackViewerActivity(
+                                            navController,
+                                            trackWriterInstance
+                                        )
+                                    } ?: Text(
+                                        "Error: TrackWriter not initialized.",
+                                        modifier = Modifier
+                                            .padding(16.dp)
+                                            .align(Alignment.Center)
+                                    )
                                 }
                             }
                         } else {
@@ -281,7 +324,7 @@ class MainActivity : ComponentActivity() {
      * Placeholder for actual logic to go to the device's current location on the map.
      * In a real app, this would involve using Android's location services.
      */
-    fun goToCurrentLocation(){
+    fun goToCurrentLocation() {
         // Example: To get the actual current location, you would need
         // a LocationManager instance and request updates or last known location.
         // For demonstration, this remains a placeholder.
@@ -309,7 +352,12 @@ class MainActivity : ComponentActivity() {
         // This function's logic is largely superseded by the `requestPermissionLauncher` pattern.
         // If it's not explicitly called, it can be removed to reduce confusion.
         // For now, it's kept as-is, but note its limited role in this updated flow.
-        val permissionState = remember { ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) }
+        val permissionState = remember {
+            ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            )
+        }
         if (permissionState == PackageManager.PERMISSION_GRANTED) {
             onPermissionGranted()
         } else {
@@ -326,7 +374,11 @@ class MainActivity : ComponentActivity() {
     // The traditional `onRequestPermissionsResult` callback is part of `ComponentActivity`.
     // It will still be called by the system, even if you use `ActivityResultContracts`.
     // It's good practice to keep it if you have other permission requests not handled by `ActivityResultContracts`.
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         // If you rely solely on `requestPermissionLauncher` for location, this block
         // for `REQUEST_PERMISSIONS_REQUEST_CODE` might not be strictly necessary for location.
@@ -404,7 +456,6 @@ fun PermissionDeniedScreen(onRetryClick: () -> Unit) {
 }
 
 
-
 /**
  * Placeholder for map change listener.
  */
@@ -419,8 +470,13 @@ fun onMapChanged(mapView: MapView) {
 @SuppressLint("MissingPermission") // Suppress lint warning because permissions are checked at a higher level
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BottomAppBarExample(navController: NavHostController, map: MapView?, mapViewModel: MapViewModel) { // Marked map and trackWriter as nullable
+fun BottomAppBarExample(
+    navController: NavHostController,
+    map: MapView?,
+    mapViewModel: MapViewModel
+) { // Marked map and trackWriter as nullable
     LocalContext.current
+    val isRecording = mapViewModel.isRecording.collectAsState()
     Scaffold(
         topBar = {
             TopAppBar(
@@ -451,7 +507,7 @@ fun BottomAppBarExample(navController: NavHostController, map: MapView?, mapView
                     }) {
                         Icon(Icons.Filled.Edit, contentDescription = "Localized description")
                     }
-                    IconButton(onClick = { mapViewModel.finishRecordingAndSaveFile() }) {
+                    IconButton(onClick = { }) {
                         Icon(Icons.Filled.Check, contentDescription = "Localized description")
                     }
                     IconButton(onClick = { /* do something */ }) {
@@ -461,35 +517,49 @@ fun BottomAppBarExample(navController: NavHostController, map: MapView?, mapView
                 floatingActionButton = {
                     FloatingActionButton(
                         onClick = {
-                            Log.d("Floating red Action Button", "Button was pressed")
-                            mapViewModel.startRecordingAndSaveFile()
-                            // Safely remove overlays. `map?.overlays` returns null if map is null.
-                            // If `map.overlays` is null, `filter` and `removeAll` won't be called.
-                            map?.let {
-                                val overlaysToRemove = it.overlays.filter { overlay -> !overlay.toString().contains("MyLocation") }
-                                it.overlays.removeAll(overlaysToRemove)
-                                it.setDestroyMode(false)
+                            if (!isRecording.value == true) {
+                                Log.d("Floating red Action Button", "Button was pressed")
+                                mapViewModel.startRecordingAndSaveFile()
+                                // Safely remove overlays. `map?.overlays` returns null if map is null.
+                                // If `map.overlays` is null, `filter` and `removeAll` won't be called.
+                                map?.let {
+                                    val overlaysToRemove = it.overlays.filter { overlay ->
+                                        !overlay.toString().contains("MyLocation")
+                                    }
+                                    it.overlays.removeAll(overlaysToRemove)
+                                    it.setDestroyMode(false)
+                                }
+
+                                val constraints = Constraints.Builder()
+                                    .setRequiredNetworkType(NetworkType.CONNECTED)
+                                    .build()
+
+                                // It's generally not recommended to pass UI components (like MapView) to Workers directly.
+                                // Instead, pass necessary data (e.g., activity ID, parameters for tracking).
+                                OneTimeWorkRequestBuilder<TrackWriterWorker>()
+                                    .setConstraints(constraints)
+                                    .setInputData(
+                                        Data.Builder().putString("mapViewKey", "mapViewInstance")
+                                            .build()
+                                    )
+                                    .build()
+                            } else {
+                                mapViewModel.finishRecordingAndSaveFile()
                             }
-
-                            val constraints = Constraints.Builder()
-                                .setRequiredNetworkType(NetworkType.CONNECTED)
-                                .build()
-
-                            // It's generally not recommended to pass UI components (like MapView) to Workers directly.
-                            // Instead, pass necessary data (e.g., activity ID, parameters for tracking).
-                            OneTimeWorkRequestBuilder<TrackWriterWorker>()
-                                .setConstraints(constraints)
-                                .setInputData(Data.Builder().putString("mapViewKey", "mapViewInstance").build())
-                                .build()
-//
 //                            WorkManager.getInstance(context).enqueue(trackWriterWorker)
                             //navController.navigate("CurrentTrackViewerActivity")
                         },
                         containerColor = BottomAppBarDefaults.bottomAppBarFabColor,
                         elevation = FloatingActionButtonDefaults.bottomAppBarFabElevation()
                     ) {
-                        val recIcon = Icons.Filled.AddCircle
-                        Icon(recIcon, "Localized description", Modifier.size(48.dp), tint = Color.Red)
+                        val fabIcon =
+                            if (isRecording.value) Icons.Default.Close else Icons.Filled.PlayArrow
+                        Icon(
+                            fabIcon,
+                            "Localized description",
+                            Modifier.size(48.dp),
+                            tint = Color.Red
+                        )
                     }
                 }
             )
