@@ -1,7 +1,9 @@
 package com.example.uitutorial
 
 import android.util.Log
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -20,69 +22,31 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import com.example.uitutorial.ui.theme.UITutorialTheme
+import org.osmdroid.views.MapView
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PastTrackDetailScreen (navController: NavHostController){
+fun PastTrackDetailScreen (navController: NavHostController, mapViewModel: MapViewModel){
 
-    val context = LocalContext.current
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.primary,
-                ),
-                title = {
-                    Text("Past Activities")
-                }
-            )
-        },
+    UITutorialTheme {
 
-        bottomBar = {
-            BottomAppBar(
-                modifier = Modifier
-                    .clip(shape = RoundedCornerShape(20.dp)),
-                actions = {
-                    IconButton(onClick = { navController.navigate("main") }) {
-                        Icon(Icons.Filled.Home, contentDescription = "Localized description")
-                    }
-                    IconButton(onClick = { /* do something */ }) {
-                        Icon(
-                            Icons.Filled.Edit,
-                            contentDescription = "Localized description",
-                        )
-                    }
-                    IconButton(onClick = { /* do something */ }) {
-                        Icon(
-                            Icons.Filled.Check,
-                            contentDescription = "Localized description",
-                        )
-                    }
-                    IconButton(onClick = { /* do something */ }) {
-                        Icon(
-                            Icons.Filled.Edit,
-                            contentDescription = "Localized description",
-                        )
-                    }
-                },
-
-                )
-        },
-    ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .padding(innerPadding)
-                .clip(shape = RoundedCornerShape(20.dp))
-        ) {
-            // Display a list of clickable items using LazyColumn
-
-
+        Box(modifier = Modifier.fillMaxSize()) {
+            MapPastTrackView(mapViewModel)
         }
     }
+}
+
+@Composable
+fun item(){
+    val context = LocalContext.current
+    //Log.d("ClickableItem", "You clicked on file: ${file.name}")
+    val itemMapView = remember { MapView(context) }
+
 }

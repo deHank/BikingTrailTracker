@@ -169,6 +169,20 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    private val prevMapViewModel: MapViewModel by viewModels {
+        object : androidx.lifecycle.ViewModelProvider.Factory {
+            override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
+                if (modelClass.isAssignableFrom(MapViewModel::class.java)) {
+                    // Ensure trackWriter is not null here. setupCoreAppComponents guarantees it.
+                    // This factory will only be called after setupCoreAppComponents.
+                    @Suppress("UNCHECKED_CAST")
+                    return MapViewModel(application, trackWriter!!, mapPreferencesRepository!!) as T
+                }
+                throw IllegalArgumentException("Unknown ViewModel class")
+            }
+        }
+    }
+
     /**
      * Checks if location permissions are already granted. If not, requests them.
      * This method is called once at the start of the activity to initiate the permission flow.
@@ -251,7 +265,7 @@ class MainActivity : ComponentActivity() {
                                     )
                                 }
                                 composable("pastTrackDetailsScreen") {
-                                    PastTrackDetailScreen(navController)
+                                    PastTrackDetailScreen(navController, prevMapViewModel)
                                 }
                                 composable("pastTracksViewer") {
                                     map?.let { mapInstance ->
