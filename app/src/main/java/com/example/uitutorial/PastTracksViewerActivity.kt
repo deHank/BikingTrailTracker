@@ -1,5 +1,6 @@
 package com.example.uitutorial
 
+import android.R.attr.onClick
 import android.preference.PreferenceManager
 import android.util.Log
 import android.view.View
@@ -36,8 +37,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.navigation.NavHostController
+import androidx.navigation.compose.rememberNavController
 import org.osmdroid.bonuspack.kml.KmlTrack
 import org.osmdroid.config.Configuration.getInstance
+import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Polygon
 import org.osmdroid.views.overlay.Polyline
@@ -111,10 +114,12 @@ fun PastTracksViewerActivity(
                 items(fileList) { file ->
 
                     //Each item is contained within its own clickable block
-                    ClickableItem(file = file, pastTrackGrabber = pastTrackGrabber) {
+                    ClickableItem(navController, file = file, pastTrackGrabber = pastTrackGrabber) {
                         Log.d("ClickableItem", "You clicked on file: ${file.name}")
                         pastTrackGrabber.getPointsFromFile(context, file.name)
+                        navController.navigate("pastTrackDetailsScreen")
                     }
+
                 }
             }
         }
@@ -122,7 +127,7 @@ fun PastTracksViewerActivity(
 }
 
 @Composable
-fun ClickableItem(file: File, pastTrackGrabber: PastTrackGrabber, onClick: () -> Unit) {
+fun ClickableItem(navController: NavHostController, file: File, pastTrackGrabber: PastTrackGrabber, onClick: () -> Unit) {
     val context = LocalContext.current
 
     var points = pastTrackGrabber.getPointsFromFile(context, file.name)
@@ -134,7 +139,7 @@ fun ClickableItem(file: File, pastTrackGrabber: PastTrackGrabber, onClick: () ->
     // Load osmdroid config for this specific map view instance
     DisposableEffect(itemMapView) {
         getInstance().load(context, PreferenceManager.getDefaultSharedPreferences(context))
-        itemMapView.setTileSource(org.osmdroid.tileprovider.tilesource.TileSourceFactory.MAPNIK) // Set tile source
+        itemMapView.setTileSource(TileSourceFactory.MAPNIK) // Set tile source
         itemMapView.controller.setZoom(1.0) // Initial zoom
 
         onDispose {
@@ -143,6 +148,7 @@ fun ClickableItem(file: File, pastTrackGrabber: PastTrackGrabber, onClick: () ->
             itemMapView.onDetach() // Clean up internal resources
         }
     }
+
 
     var onFirstLayoutListener = object : MapView.OnFirstLayoutListener {
 

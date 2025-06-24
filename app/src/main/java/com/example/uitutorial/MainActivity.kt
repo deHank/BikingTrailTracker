@@ -250,6 +250,9 @@ class MainActivity : ComponentActivity() {
                                         modifier = Modifier.align(Alignment.Center)
                                     )
                                 }
+                                composable("pastTrackDetailsScreen") {
+                                    PastTrackDetailScreen(navController)
+                                }
                                 composable("pastTracksViewer") {
                                     map?.let { mapInstance ->
                                         PastTracksViewerActivity(navController, pastTrackGrabber)
