@@ -1,5 +1,6 @@
 package com.example.uitutorial
 
+import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import androidx.compose.animation.animateContentSize
@@ -32,8 +33,12 @@ import kotlinx.coroutines.launch
 import org.osmdroid.config.Configuration.getInstance
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.views.MapView
+import org.osmdroid.views.overlay.Polyline
 import org.osmdroid.views.overlay.compass.CompassOverlay
 import org.osmdroid.views.overlay.gestures.RotationGestureOverlay
+import org.osmdroid.views.overlay.simplefastpoint.SimpleFastPointOverlay
+import org.osmdroid.views.overlay.simplefastpoint.SimpleFastPointOverlayOptions
+import org.osmdroid.views.overlay.simplefastpoint.SimplePointTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -46,9 +51,31 @@ fun MapPastTrackView(
     val context = LocalContext.current
     val liveTrackLocations by mapViewModel1.recordedLocationsFlow.collectAsState() // Observe live recorded locations for drawing
     val lastMapSavedState by mapViewModel1.lastSavedMapState.collectAsState()
-    val mapView = remember {
+    var mapLocations = pastTrackGrabber.getGeoPointsFromFile(context, fileName)
 
-        MapView(context).apply {
+
+    val mapView = remember {MapView(context) }
+
+        var onFirstLayoutListener = object : MapView.OnFirstLayoutListener {
+
+            override fun onFirstLayout(
+                v: View?,
+                left: Int,
+                top: Int,
+                right: Int,
+                bottom: Int
+            ) {
+
+
+
+                val line = Polyline()
+                line.setPoints(mapLocations)
+
+                mapView.zoomToBoundingBox(line.bounds, false, 50)
+            }
+        }
+
+        mapView.apply {
 
             if(lastMapSavedState != null){
                 controller.setCenter(mapViewModel1.lastSavedMapState.value)
@@ -61,21 +88,28 @@ fun MapPastTrackView(
             overlays.add(CompassOverlay(context, this).apply { enableCompass() })
             setMultiTouchControls(true)
 
-            //setup myLocationOverlay
-            //val locationOverlay = MyLocationNewOverlay(GpsMyLocationProvider(context), this)
-            //locationOverlay.enableMyLocation()
-            //locationOverlay.enableFollowLocation()
-            //locationOverlay.isDrawAccuracyEnabled = true
+            val pt = SimplePointTheme(mapLocations, true)
 
+            val opt = SimpleFastPointOverlayOptions.getDefaultStyle().setAlgorithm(
+                SimpleFastPointOverlayOptions.RenderingAlgorithm.MAXIMUM_OPTIMIZATION)
+            val sfpo = SimpleFastPointOverlay(pt, opt)
+
+            //overlays.add(sfpo)
+            val line = Polyline()
+            line.setPoints(mapLocations)
+
+            overlays.add(line);
             //overlays.add(2, locationOverlay)
-            controller.zoomTo(18)
+            addOnFirstLayoutListener(onFirstLayoutListener)
             invalidate()
 
         }
-    }
+
+
+
     val scope = rememberCoroutineScope() // Coroutine scope for launching sheet operations
     val bottomSheetScaffoldState = rememberBottomSheetScaffoldState() // State for controlling the bottom sheet
-
+    val sessionStats = pastTrackGrabber.getTotalDistanceFromFile(context, fileName)
     //mapView.init(context, PreferenceManager.getDefaultSharedPreferences(context))
     val currentLocation by mapViewModel1.currentLocation.collectAsState()
     BottomSheetScaffold(
@@ -92,9 +126,10 @@ fun MapPastTrackView(
             ) {
                 Text("Activity Stats", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(8.dp))
-
-
-
+                Text("Total Distance: " + sessionStats.totalDistance, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                Text("Avg Pace: " + sessionStats.avgPace, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                Text("Moving Time: " + sessionStats.movingTime, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                Text("Elevation Gain ", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
                 // Add a button to expand/collapse the sheet
                 Button(
                     onClick = {

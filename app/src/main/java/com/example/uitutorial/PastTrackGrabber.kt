@@ -6,6 +6,8 @@ import com.garmin.fit.Decode
 import com.garmin.fit.MesgBroadcaster
 import com.garmin.fit.MesgListener
 import com.garmin.fit.RecordMesg
+import com.garmin.fit.SessionMesg
+import com.garmin.fit.SportEvent
 import com.garmin.fit.util.SemicirclesConverter
 import org.osmdroid.api.IGeoPoint
 import org.osmdroid.util.BoundingBox
@@ -196,6 +198,42 @@ class PastTrackGrabber {
             }
         }
         return BoundingBox(nord, est, sud, ovest)
+    }
+
+    fun getTotalDistanceFromFile(context: Context, fileName: String): SessionDataValues {
+        var sessionDataValues = SessionDataValues(0.0, 0.0, 0.0, SportEvent.UNCATEGORIZED)
+        val tracksDir = File(context.filesDir, "tracks")
+        val fitFile = File(tracksDir, fileName)
+        Log.d(TAG, "FIT file path: ${fitFile.absolutePath}")
+        if (!fitFile.exists()) {
+            Log.e(TAG, "FIT file not found: ${fitFile.absolutePath}")
+            //return emptyList()
+        }
+        val messageListner = MesgListener { mesg ->
+
+            if (mesg.name == "session") {
+                var distance = mesg.getFieldValue(SessionMesg.TotalDistanceFieldNum) as Double
+                var avgPace = mesg.getFieldValue(SessionMesg.AvgSpeedFieldNum) as Double
+                var movingTime = 0.0
+                //var elevationGain = mesg.getFieldValue(SessionMesg.) as Int
+                var sportType = SportEvent.getByValue(mesg.getFieldValue(SessionMesg.SportFieldNum) as Short)
+
+                sessionDataValues = SessionDataValues(distance, avgPace, movingTime, sportType)
+                //return@MesgListener sessionDataValues
+            }
+        }
+        val decode = Decode()
+        var fileInputStream = fitFile.inputStream()
+        decode.addListener(messageListner)
+        var messageBroadcaster = MesgBroadcaster()
+        messageBroadcaster.addListener(messageListner)
+        try {
+            messageBroadcaster.run(fileInputStream)
+        }catch (err: Exception) {
+            Log.e(TAG, "Error reading FIT file: ${err.message}")
+        }
+
+        return sessionDataValues
     }
 
 }
