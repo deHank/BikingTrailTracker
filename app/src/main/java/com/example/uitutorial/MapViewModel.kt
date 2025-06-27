@@ -103,6 +103,8 @@ class MapViewModel(application: Application, private val trackWriter: TrackWrite
 
     }
 
+
+
     fun startRecordingAndSaveFile(){
         trackWriter.startRecording()
     }

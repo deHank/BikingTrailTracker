@@ -21,7 +21,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
@@ -59,6 +58,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import androidx.work.Constraints
 import androidx.work.Data
 import androidx.work.NetworkType
@@ -264,8 +264,16 @@ class MainActivity : ComponentActivity() {
                                         modifier = Modifier.align(Alignment.Center)
                                     )
                                 }
-                                composable("pastTrackDetailsScreen") {
-                                    PastTrackDetailScreen(navController, prevMapViewModel)
+                                composable(
+                                    "pastTrackDetails/{fileName}", // Defines the route with a 'fileName' argument
+                                    arguments = listOf(navArgument("fileName") { type = androidx.navigation.NavType.StringType })
+                                ) { backStackEntry ->
+                                    val fileName = backStackEntry.arguments?.getString("fileName")
+                                    if (fileName != null) {
+                                        PastTrackDetailsScreen(navController, mapViewModel, fileName, pastTrackGrabber) // Calls your PastTrackDetailsScreen
+                                    } else {
+                                        Text("Error: Track file name not provided.", modifier = Modifier.align(Alignment.Center))
+                                    }
                                 }
                                 composable("pastTracksViewer") {
                                     map?.let { mapInstance ->

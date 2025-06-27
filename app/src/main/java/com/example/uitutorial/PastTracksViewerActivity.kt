@@ -117,7 +117,7 @@ fun PastTracksViewerActivity(
                     ClickableItem(navController, file = file, pastTrackGrabber = pastTrackGrabber) {
                         Log.d("ClickableItem", "You clicked on file: ${file.name}")
                         pastTrackGrabber.getPointsFromFile(context, file.name)
-                        navController.navigate("pastTrackDetailsScreen")
+                        navController.navigate("pastTrackDetails/${file.name}")
                     }
 
                 }
