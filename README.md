@@ -2,3 +2,4 @@ BikingTrailTracker is an application to create tracks and view them (live while 
 
 <img src="https://github.com/user-attachments/assets/b858e960-441d-4122-b27d-a87088b3f438" width="256"/>
 <img src="https://github.com/user-attachments/assets/a6fa46f9-6533-4b97-9e03-41e172a646f1" width = "256"/>
+<img src="https://github.com/user-attachments/assets/a1b80560-c412-455a-82c7-f1d68b8f1f6e" width = "256"/>
