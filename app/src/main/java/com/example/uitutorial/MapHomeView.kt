@@ -54,7 +54,7 @@ fun MapHomeView(mapViewModel1: MapViewModel) {
             }
             Configuration.getInstance().load(context, context.getSharedPreferences("osmdroid", 0))
 
-            setTileSource(TileSourceFactory.MAPNIK)
+            setTileSource(TileSourceFactory.DEFAULT_TILE_SOURCE)
             overlays.add(RotationGestureOverlay(this))
             overlays.add(CompassOverlay(context, this).apply { enableCompass() })
             setMultiTouchControls(true)
