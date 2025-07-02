@@ -30,6 +30,25 @@ class FitFileWriter(private val context: Context) {
     private var maxSpeed: Float = 0.0F
     private var totalCalories: Int = 0
     private var previousLocation: Location? = null // To calculate segment distance
+    private val tempTracksDir: File = File(context.filesDir, "tracks_in_progress")
+
+    private var currentTempFile: File? = null
+    private val finalizedTracksDir: File = File(context.filesDir, "tracks")
+
+    init {
+        ensureDirectoriesExist()
+    }
+
+    private fun ensureDirectoriesExist() {
+        if (!tempTracksDir.exists()) {
+            tempTracksDir.mkdirs()
+            Log.d(TAG, "Created temporary tracks directory: ${tempTracksDir.absolutePath}")
+        }
+        if (!finalizedTracksDir.exists()) {
+            finalizedTracksDir.mkdirs()
+            Log.d(TAG, "Created finalized tracks directory: ${finalizedTracksDir.absolutePath}")
+        }
+    }
 
     /**
      * Starts a new FIT file writing session. Initializes the file and writes
@@ -45,12 +64,12 @@ class FitFileWriter(private val context: Context) {
         }
 
         // --- MODIFIED: Create 'tracks' subfolder and then the file within it ---
-        val tracksDir = File(context.filesDir, "tracks")
-        if (!tracksDir.exists()) {
-            tracksDir.mkdirs() // Create the directory if it doesn't exist
-            Log.d(TAG, "Created tracks directory: ${tracksDir.absolutePath}")
+        currentTempFile = File(context.filesDir, "tracksInProgress")
+        if (!currentTempFile!!.exists()) {
+            currentTempFile!!.mkdirs() // Create the directory if it doesn't exist
+            Log.d(TAG, "Created tracks directory: ${currentTempFile!!.absolutePath}")
         }
-        val file = File(tracksDir, fileName) // Create the file inside the tracks directory
+        val file = File(currentTempFile, fileName) // Create the file inside the tracks directory
 
 
         try {
@@ -250,6 +269,19 @@ class FitFileWriter(private val context: Context) {
         closeResources()
         Toast.makeText(context, "FIT file saved.", Toast.LENGTH_SHORT).show()
         Log.i(TAG, "FIT file encoding completed and closed.")
+        // Attempt to move the file to the finalized directory
+        currentTempFile?.let { tempFile ->
+            val finalFile = File(finalizedTracksDir, "")
+            if (tempFile.renameTo(finalFile)) {
+                Log.i(TAG, "FIT file moved successfully to: ${finalFile.absolutePath}")
+                Toast.makeText(context, "FIT file saved: ${finalFile.name}", Toast.LENGTH_LONG).show()
+            } else {
+                Log.e(TAG, "Failed to move FIT file from ${tempFile.absolutePath} to ${finalFile.absolutePath}")
+                Toast.makeText(context, "Error saving FIT file (move failed).", Toast.LENGTH_LONG).show()
+            }
+        } ?: Log.e(TAG, "No temporary file to move.")
+
+
     }
 
     private fun closeResources() {
