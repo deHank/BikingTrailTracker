@@ -276,7 +276,7 @@ class FitFileWriter(private val context: Context) {
         input.copyTo(output)
         input.close()
         output.close()
-
+        currentTempFile!!.delete()
     }
 
     private fun closeResources() {
