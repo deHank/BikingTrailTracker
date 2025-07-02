@@ -5,10 +5,10 @@ import android.widget.Toast
 import com.garmin.fit.Fit
 import com.garmin.fit.util.SemicirclesConverter
 import java.io.File
+import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.IOException
 import java.util.Date
-import kotlin.random.Random
 
 class FitFileWriter(private val context: Context) {
     private val TAG = "FitFileWriter"
@@ -32,9 +32,10 @@ class FitFileWriter(private val context: Context) {
     private var previousLocation: Location? = null // To calculate segment distance
     private val tempTracksDir: File = File(context.filesDir, "tracks_in_progress")
 
+    private var currentTempFileDirectory: File? = null
     private var currentTempFile: File? = null
-    private val finalizedTracksDir: File = File(context.filesDir, "tracks")
-
+    private var finalizedTracksDir: File = File(context.filesDir, "tracks")
+    private var finalizedTrackFile: File? = null
     init {
         ensureDirectoriesExist()
     }
@@ -64,17 +65,17 @@ class FitFileWriter(private val context: Context) {
         }
 
         // --- MODIFIED: Create 'tracks' subfolder and then the file within it ---
-        currentTempFile = File(context.filesDir, "tracksInProgress")
-        if (!currentTempFile!!.exists()) {
-            currentTempFile!!.mkdirs() // Create the directory if it doesn't exist
-            Log.d(TAG, "Created tracks directory: ${currentTempFile!!.absolutePath}")
+        currentTempFileDirectory = File(context.filesDir, "tracks_in_progress")
+        if (!currentTempFileDirectory!!.exists()) {
+            currentTempFileDirectory!!.mkdirs() // Create the directory if it doesn't exist
+            Log.d(TAG, "Created tracks directory: ${currentTempFileDirectory!!.absolutePath}")
         }
-        val file = File(currentTempFile, fileName) // Create the file inside the tracks directory
-
+        currentTempFile = File(currentTempFileDirectory, fileName) // Create the file inside the tracks directory
+        finalizedTrackFile = File(finalizedTracksDir, fileName)
 
         try {
-            fileOutputStream = FileOutputStream(file)
-            fileEncoder = com.garmin.fit.FileEncoder(file, Fit.ProtocolVersion.V2_0)
+            fileOutputStream = FileOutputStream(currentTempFile)
+            fileEncoder = com.garmin.fit.FileEncoder(currentTempFile, Fit.ProtocolVersion.V2_0)
 
             // Reset cumulative metrics for a new session
             cumulativeDistance = 0.0F
@@ -270,17 +271,11 @@ class FitFileWriter(private val context: Context) {
         Toast.makeText(context, "FIT file saved.", Toast.LENGTH_SHORT).show()
         Log.i(TAG, "FIT file encoding completed and closed.")
         // Attempt to move the file to the finalized directory
-        currentTempFile?.let { tempFile ->
-            val finalFile = File(finalizedTracksDir, "")
-            if (tempFile.renameTo(finalFile)) {
-                Log.i(TAG, "FIT file moved successfully to: ${finalFile.absolutePath}")
-                Toast.makeText(context, "FIT file saved: ${finalFile.name}", Toast.LENGTH_LONG).show()
-            } else {
-                Log.e(TAG, "Failed to move FIT file from ${tempFile.absolutePath} to ${finalFile.absolutePath}")
-                Toast.makeText(context, "Error saving FIT file (move failed).", Toast.LENGTH_LONG).show()
-            }
-        } ?: Log.e(TAG, "No temporary file to move.")
-
+        var input = FileInputStream(currentTempFile)
+        var output = FileOutputStream(finalizedTrackFile)
+        input.copyTo(output)
+        input.close()
+        output.close()
 
     }
 
