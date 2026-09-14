@@ -66,7 +66,6 @@ fun MapHomeView(mapViewModel1: MapViewModel) {
             overlays.add(2, locationOverlay)
             controller.zoomTo(18)
             invalidate()
-
         }
     }
 
