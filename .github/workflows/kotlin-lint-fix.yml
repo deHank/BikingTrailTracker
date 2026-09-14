@@ -11,35 +11,35 @@ jobs:
   lint-and-fix:
     runs-on: ubuntu-latest
 
-    # Permissions needed for the action to write fixes back to the PR branch
     permissions:
       contents: write
 
     steps:
-      # 1. Checkout the code (fetch-depth 0 is recommended for PR checks)
+      # 1. Checkout Code (uses newer checkout version compatible with modern Node engines)
+      # Do NOT force-override the ref here to let the lint-action manage it seamlessly
       - name: Checkout Code
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          ref: ${{ github.event.pull_request.head.ref }}
 
-      # 2. Set up Java environment
+      # 2. Set up Java Environment
       - name: Set up JDK
         uses: actions/setup-java@v4
         with:
-          java-version: '17' # Adjust to your project's Java version
+          java-version: '17' 
           distribution: 'zulu'
 
-      # 3. Run the Linter & Auto-Fix Action
-      - name: Lint and Auto-Fix Kotlin
-        uses: wearerequired/lint-action@v2
-        with:
-          # Enable ktlint
-          ktlint: true
-          # Instruct the action to automatically push fixes to the PR
-          ktlint_auto_fix: true
-          # Enable git commitments natively from the runner
-          auto_fix: true
-          # Optional: point to your gradle wrapper if you manage ktlint via Gradle plugin
-          # ktlint_command_prefix: ./gradlew
+      # 3. Grant execute permission to Gradle
+      - name: Make Gradle Wrapper Executable
+        run: chmod +x gradlew
 
+      # 4. Use Lint Action v3 (Fixes the fatal worktree error)
+      - name: Lint and Auto-Fix Kotlin
+        uses: wearerequired/lint-action@v3
+        with:
+          # Tells the action to commit any modifications back to the PR
+          auto_fix: true
+          commit_message: "style: auto-fix Kotlin styling via ktlint"
+          
+          # Trigger your project's gradle layout format task instead of custom flags
+          # (Swap 'ktlintFormat' to your specific task like 'spotlessApply' if using Spotless)
+          prettier: true
+          prettier_command_prefix: ./gradlew ktlintFormat --no-daemon
