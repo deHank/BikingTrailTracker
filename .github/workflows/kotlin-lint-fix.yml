@@ -1,0 +1,45 @@
+name: Kotlin Lint & Fix
+
+on:
+  pull_request:
+    branches: [ main, master ]
+    paths:
+      - '**/*.kt'
+      - '**/*.kts'
+
+jobs:
+  lint-and-fix:
+    runs-on: ubuntu-latest
+
+    # Permissions needed for the action to write fixes back to the PR branch
+    permissions:
+      contents: write
+
+    steps:
+      # 1. Checkout the code (fetch-depth 0 is recommended for PR checks)
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.ref }}
+
+      # 2. Set up Java environment
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17' # Adjust to your project's Java version
+          distribution: 'zulu'
+
+      # 3. Run the Linter & Auto-Fix Action
+      - name: Lint and Auto-Fix Kotlin
+        uses: wearerequired/lint-action@v2
+        with:
+          # Enable ktlint
+          ktlint: true
+          # Instruct the action to automatically push fixes to the PR
+          ktlint_auto_fix: true
+          # Enable git commitments natively from the runner
+          auto_fix: true
+          # Optional: point to your gradle wrapper if you manage ktlint via Gradle plugin
+          # ktlint_command_prefix: ./gradlew
+
