@@ -63,7 +63,6 @@ fun MapHomeView(mapViewModel1: MapViewModel) {
             locationOverlay.enableMyLocation()
             locationOverlay.enableFollowLocation()
             locationOverlay.isDrawAccuracyEnabled = true
-
             overlays.add(2, locationOverlay)
             controller.zoomTo(18)
             invalidate()
