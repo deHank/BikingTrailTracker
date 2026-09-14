@@ -58,7 +58,6 @@ fun MapHomeView(mapViewModel1: MapViewModel) {
             overlays.add(RotationGestureOverlay(this))
             overlays.add(CompassOverlay(context, this).apply { enableCompass() })
             setMultiTouchControls(true)
-
             //setup myLocationOverlay
             val locationOverlay = MyLocationNewOverlay(GpsMyLocationProvider(context), this)
             locationOverlay.enableMyLocation()
